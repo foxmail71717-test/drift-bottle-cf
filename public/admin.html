@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>树洞漂流瓶 - 管理员</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .admin-header {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+    .admin-header h1 { font-size: 24px; margin: 0; }
+    .admin-header p { font-size: 14px; opacity: 0.9; margin: 5px 0 0; }
+    .admin-container { padding: 20px; min-height: calc(100vh - 120px); background: #f5f5f5; }
+    .admin-card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .admin-card h3 { margin: 0 0 15px; font-size: 16px; color: #333; }
+    .bottle-item { padding: 15px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
+    .bottle-item:last-child { border-bottom: none; }
+    .bottle-item:active { background: #f8f8f8; }
+    .bottle-content { font-size: 14px; color: #333; margin-bottom: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bottle-meta { font-size: 12px; color: #999; }
+    .admin-btn { width: 100%; padding: 15px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff; border: none; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    .admin-btn:active { transform: scale(0.98); }
+    .admin-btn:disabled { opacity: 0.6; }
+    .empty-tip { text-align: center; padding: 40px; color: #999; }
+    .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.75); color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 9999; }
+    .logout-btn { width: 100%; padding: 12px; background: #fff; color: #ff4d4f; border: 1px solid #ff4d4f; border-radius: 25px; font-size: 14px; cursor: pointer; margin-top: 20px; }
+    .detail-view { display: none; }
+    .detail-view.active { display: block; }
+    .detail-content { font-size: 15px; line-height: 1.8; color: #333; padding: 15px 0; border-bottom: 1px solid #f0f0f0; margin-bottom: 15px; }
+    .detail-images { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+    .detail-images img { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer; }
+    .detail-video { width: 100%; max-height: 200px; border-radius: 8px; margin-bottom: 15px; }
+    .back-btn { padding: 10px 20px; background: #fff; border: 1px solid #ddd; border-radius: 20px; cursor: pointer; margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+  <div class="admin-header">
+    <h1>⭐ 树洞漂流瓶</h1>
+    <p>管理员后台</p>
+  </div>
+
+  <div class="admin-container">
+    <!-- 登录区 -->
+    <div id="loginSection">
+      <div class="admin-card">
+        <h3>⭐ 管理员登录</h3>
+        <input type="password" id="passwordInput" placeholder="请输入管理员密码" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:15px;font-size:14px;box-sizing:border-box;">
+        <button class="admin-btn" id="loginBtn">登录</button>
+      </div>
+    </div>
+
+    <!-- 主界面 -->
+    <div id="mainSection" style="display:none;">
+      <!-- 统计区 -->
+      <div class="admin-card" style="display:flex;justify-content:space-around;text-align:center;">
+        <div>
+          <div style="font-size:28px;font-weight:bold;color:#4a90d9;" id="pendingCount">0</div>
+          <div style="font-size:12px;color:#999;margin-top:4px;">🌊 待拾取</div>
+        </div>
+        <div style="width:1px;background:#f0f0f0;"></div>
+        <div>
+          <div style="font-size:28px;font-weight:bold;color:#f5576c;" id="pickedCount">0</div>
+          <div style="font-size:12px;color:#999;margin-top:4px;">🍾 已拾取</div>
+        </div>
+        <div style="width:1px;background:#f0f0f0;"></div>
+        <div>
+          <div style="font-size:28px;font-weight:bold;color:#333;" id="totalCount">0</div>
+          <div style="font-size:12px;color:#999;margin-top:4px;">📦 总计</div>
+        </div>
+      </div>
+
+      <!-- 拾取区 -->
+      <div class="admin-card">
+        <h3>🍾 拾取漂流瓶</h3>
+        <button class="admin-btn" id="pickBtn">点击拾取</button>
+      </div>
+
+      <!-- 列表区 -->
+      <div class="admin-card">
+        <h3>📜 已拾取 (<span id="countText">0</span>)</h3>
+        <div id="bottleList">
+          <div class="empty-tip">加载中...</div>
+        </div>
+      </div>
+
+      <button class="logout-btn" id="logoutBtn">退出登录</button>
+      <a href="/chat.html" style="display:block;text-align:center;margin-top:10px;color:#667eea;text-decoration:none;font-size:14px;">💬 查看消息和好友</a>
+    </div>
+
+    <!-- 详情区 -->
+    <div id="detailSection" class="detail-view">
+      <button class="back-btn" id="backBtn">← 返回列表</button>
+      <div class="admin-card">
+        <div id="detailContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = '/api';
+    const ADMIN_PASSWORD = 'lsp616'; // 管理员密码
+    let userInfo = null;
+    let currentBottleId = null; // 当前查看的漂流瓶ID
+
+    // 调用 API
+    async function callApi(action, data = {}) {
+      const res = await fetch(`${API_URL}/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      return res.json();
+    }
+
+    // Toast
+    function showToast(msg) {
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2000);
+    }
+
+    // 格式化时间
+    function formatTime(d) {
+      if (!d) return '';
+      const date = new Date(d);
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+    }
+
+    // 初始化
+    async function init() {
+      // 检查是否已登录
+      const saved = localStorage.getItem('adminInfo') || localStorage.getItem('userInfo');
+      if (saved) {
+        userInfo = JSON.parse(saved);
+        // 同步保存到两个key
+        localStorage.setItem('adminInfo', JSON.stringify(userInfo));
+        localStorage.setItem('userInfo', JSON.stringify(userInfo));
+        showMain();
+        await loadStats();
+        await loadList();
+      }
+
+      document.getElementById('loginBtn').onclick = login;
+      document.getElementById('passwordInput').onkeydown = (e) => { if (e.key === 'Enter') login(); };
+      document.getElementById('pickBtn').onclick = pickBottle;
+      document.getElementById('logoutBtn').onclick = logout;
+      document.getElementById('backBtn').onclick = showMain;
+    }
+
+    // 登录
+    async function login() {
+      const pwd = document.getElementById('passwordInput').value;
+      if (pwd !== ADMIN_PASSWORD) {
+        showToast('密码错误');
+        return;
+      }
+
+      const btn = document.getElementById('loginBtn');
+      btn.disabled = true;
+      btn.textContent = '登录中...';
+
+      try {
+        const userId = 'admin_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4);
+        const result = await callApi('login', { userId, nickName: '管理员', isAdmin: true });
+
+        if (result.code === 0) {
+          userInfo = result.data;
+          userInfo.role = 'admin';
+          localStorage.setItem('adminInfo', JSON.stringify(userInfo));
+          localStorage.setItem('userInfo', JSON.stringify(userInfo));
+          showToast('登录成功');
+          showMain();
+          await loadStats();
+          await loadList();
+        } else {
+          showToast(result.msg || '登录失败');
+        }
+      } catch (e) {
+        showToast('登录失败');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '登录';
+        document.getElementById('passwordInput').value = '';
+      }
+    }
+
+    // 显示主界面
+    function showMain() {
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('mainSection').style.display = 'block';
+      document.getElementById('detailSection').classList.remove('active');
+    }
+
+    // 加载统计
+    async function loadStats() {
+      try {
+        const result = await callApi('stats');
+        if (result.code === 0) {
+          document.getElementById('pendingCount').textContent = result.data.pending;
+          document.getElementById('pickedCount').textContent = result.data.picked;
+          document.getElementById('totalCount').textContent = result.data.total;
+        }
+      } catch (e) {
+        console.error('加载统计失败', e);
+      }
+    }
+
+    // 加载列表
+    async function loadList() {
+      try {
+        const result = await callApi('list');
+        const list = result.data || [];
+        document.getElementById('countText').textContent = list.length;
+
+        if (list.length === 0) {
+          document.getElementById('bottleList').innerHTML = '<div class="empty-tip">还没有拾取过漂流瓶</div>';
+          return;
+        }
+
+        document.getElementById('bottleList').innerHTML = list.map(b => `
+          <div class="bottle-item" data-id="${b.id}">
+            <div class="bottle-content">${b.content}</div>
+            <div class="bottle-meta">${formatTime(b.createTime)} · ${b.userNickName || '匿名'}</div>
+          </div>
+        `).join('');
+
+        document.querySelectorAll('.bottle-item').forEach(el => {
+          el.onclick = () => showDetail(el.dataset.id);
+        });
+      } catch (e) {
+        showToast('加载失败');
+      }
+    }
+
+    // 拾取
+    async function pickBottle() {
+      const btn = document.getElementById('pickBtn');
+      btn.disabled = true;
+      btn.textContent = '拾取中...';
+
+      try {
+        const result = await callApi('pick', { userId: userInfo.userId });
+        if (result.code === 0 && result.data) {
+          showToast('拾取成功！');
+          await loadStats();
+          await loadList();
+          showDetailById(result.data);
+        } else {
+          showToast(result.msg || '暂无新漂流瓶');
+        }
+      } catch (e) {
+        showToast('拾取失败');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '点击拾取';
+      }
+    }
+
+    // 显示详情
+    async function showDetail(id) {
+      try {
+        const result = await callApi('detail', { id });
+        if (result.code === 0) {
+          showDetailById(result.data);
+        }
+      } catch (e) {
+        showToast('加载失败');
+      }
+    }
+
+    function showDetailById(b) {
+      currentBottleId = b.id;
+      document.getElementById('mainSection').style.display = 'none';
+      document.getElementById('detailSection').classList.add('active');
+
+      let html = `<div class="detail-content">${b.content}</div>`;
+
+      if (b.images && b.images.length > 0) {
+        html += `<div style="margin-bottom:15px;"><strong>📷 图片</strong><div class="detail-images">`;
+        html += b.images.map(url => `<img src="${url}" onclick="window.open('${url}')">`).join('');
+        html += `</div></div>`;
+      }
+
+      if (b.video) {
+        html += `<div style="margin-bottom:15px;"><strong>🎬 视频</strong><video src="${b.video}" class="detail-video" controls></video></div>`;
+      }
+
+      html += `<div style="font-size:13px;color:#999;margin-bottom:15px;">投放者：${b.userNickName || '匿名'}<br>投放时间：${formatTime(b.createTime)}</div>`;
+
+      // 加好友按钮
+      if (b.userId !== userInfo.userId && b.userId !== 'anonymous') {
+        html += `<button class="admin-btn" style="background:linear-gradient(135deg, #11998e, #38ef7d);margin-top:10px;" onclick="addFriend()">💬 加TA为好友</button>`;
+      }
+
+      document.getElementById('detailContent').innerHTML = html;
+    }
+
+    // 加好友
+    async function addFriend() {
+      if (!currentBottleId) return;
+      const message = prompt('给TA说句话吧（可选）：', '想和你交个朋友～');
+      if (message === null) return;
+
+      try {
+        const result = await callApi('addFriend', {
+          fromUserId: userInfo.userId,
+          toBottleId: currentBottleId,
+          message: message || '想和你交个朋友'
+        });
+        if (result.code === 0) {
+          showToast('好友请求已发送！');
+        } else {
+          showToast(result.msg || '发送失败');
+        }
+      } catch (e) {
+        showToast('发送失败');
+      }
+    }
+
+    // 退出
+    function logout() {
+      localStorage.removeItem('adminInfo');
+      localStorage.removeItem('userInfo');
+      userInfo = null;
+      document.getElementById('loginSection').style.display = 'block';
+      document.getElementById('mainSection').style.display = 'none';
+      document.getElementById('detailSection').classList.remove('active');
+      showToast('已退出');
+    }
+
+    init();
+  </script>
+</body>
+</html>

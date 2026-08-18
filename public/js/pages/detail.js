@@ -1,0 +1,113 @@
+// ==================== 详情页 ====================
+
+Pages.detail = {
+  bottle: null,
+  bottleId: null,
+
+  render() {
+    return `<div class="detail-page" id="detailContent"><div class="loading-container"><div class="loading-icon">🍾</div><div class="loading-text">加载中...</div></div></div>`;
+  },
+
+  async onLoad(params) {
+    if (!params.id) {
+      Utils.showToast('缺少漂流瓶ID');
+      setTimeout(() => App.navigateBack(), 1500);
+      return;
+    }
+
+    this.bottleId = params.id;
+
+    try {
+      const result = await callApi('detail', { id: params.id });
+      if (result.code === 0) {
+        this.bottle = {
+          ...result.data,
+          createTimeFormatted: Utils.formatTime(result.data.createTime),
+          pickTimeFormatted: result.data.pickTime ? Utils.formatTime(result.data.pickTime) : ''
+        };
+        this.renderDetail();
+      } else {
+        throw new Error(result.msg);
+      }
+    } catch (err) {
+      document.getElementById('detailContent').innerHTML = `
+        <div class="error-container">
+          <div class="error-icon">😢</div>
+          <div class="error-text">漂流瓶不存在或加载失败</div>
+          <button class="back-btn" onclick="App.navigateBack()">返回</button>
+        </div>
+      `;
+    }
+  },
+
+  renderDetail() {
+    const b = this.bottle;
+    const isAdmin = App.isAdmin();
+    const isAnonymous = b.userNickName === '匿名用户' || b.userId === 'anonymous';
+
+    let imagesHtml = '';
+    if (b.images && b.images.length > 0) {
+      imagesHtml = `<div class="images-content"><div class="section-label">📷 图片</div><div class="image-grid">${b.images.map(url => `<img src="${url}" onclick="window.open('${url}')">`).join('')}</div></div>`;
+    }
+    let videoHtml = '';
+    if (b.video) {
+      videoHtml = `<div class="video-content"><div class="section-label">🎬 视频</div><video src="${b.video}" class="video-player" controls></video></div>`;
+    }
+
+    // 加好友按钮（仅普通用户可见，且投放者不是自己）
+    let addFriendBtn = '';
+    if (!isAdmin && b.userId !== App.userInfo.userId && !isAnonymous) {
+      addFriendBtn = `<button class="back-btn" id="addFriendBtn" style="background:linear-gradient(135deg, #11998e, #38ef7d);margin-top:10px;">💬 加TA为好友</button>`;
+    }
+
+    document.getElementById('detailContent').innerHTML = `
+      <div class="header-section">
+        <div class="header-icon">🍾</div>
+        <div class="header-info">
+          <div class="header-title">树洞漂流瓶</div>
+          <div class="header-time">${b.createTimeFormatted}</div>
+        </div>
+      </div>
+      <div class="content-section">
+        <div class="text-content">${b.content}</div>
+        ${imagesHtml}
+        ${videoHtml}
+      </div>
+      <div class="footer-section">
+        <div class="footer-item"><span class="label">投放者：</span><span class="value">${isAnonymous ? '匿名用户' : Utils.maskNickname(b.userNickName)}</span></div>
+        ${b.pickTimeFormatted ? `<div class="footer-item"><span class="label">拾取时间：</span><span class="value">${b.pickTimeFormatted}</span></div>` : ''}
+      </div>
+      <div class="back-section">
+        ${addFriendBtn}
+        <button class="back-btn" onclick="App.navigateBack()">返回</button>
+      </div>
+    `;
+
+    // 绑定加好友事件
+    const friendBtn = document.getElementById('addFriendBtn');
+    if (friendBtn) {
+      friendBtn.addEventListener('click', () => this.addFriend());
+    }
+  },
+
+  async addFriend() {
+    const message = prompt('给TA说句话吧（可选）：', '想和你交个朋友～');
+    if (message === null) return; // 用户取消
+
+    try {
+      const result = await callApi('addFriend', {
+        fromUserId: App.userInfo.userId,
+        toBottleId: this.bottleId,
+        message: message || '想和你交个朋友'
+      });
+
+      if (result.code === 0) {
+        Utils.showToast('好友请求已发送！');
+      } else {
+        Utils.showToast(result.msg || '发送失败');
+      }
+    } catch (err) {
+      Utils.showToast('发送失败');
+    }
+  }
+};
