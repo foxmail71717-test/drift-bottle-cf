@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>树洞漂流瓶 - 管理后台</title>
+  <title>树洞漂流瓶 - 管理员</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
     .admin-header {
@@ -35,13 +35,12 @@
     .detail-images img { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer; }
     .detail-video { width: 100%; max-height: 200px; border-radius: 8px; margin-bottom: 15px; }
     .back-btn { padding: 10px 20px; background: #fff; border: 1px solid #ddd; border-radius: 20px; cursor: pointer; margin-bottom: 15px; }
-    .picked-result { display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #f0f0f0; background: #f9f9f9; border-radius: 10px; padding: 15px; }
   </style>
 </head>
 <body>
   <div class="admin-header">
     <h1>⭐ 树洞漂流瓶</h1>
-    <p>管理后台 v2</p>
+    <p>管理员后台</p>
   </div>
 
   <div class="admin-container">
@@ -78,7 +77,8 @@
       <div class="admin-card">
         <h3>🍾 拾取漂流瓶</h3>
         <button class="admin-btn" id="pickBtn">点击拾取</button>
-        <div class="picked-result" id="pickedResult">
+        <!-- 拾取结果展示区 - 2026-08-19 整合版 -->
+        <div id="pickedResult" style="display:none;margin-top:20px;padding-top:20px;border-top:1px solid #f0f0f0;background:#f9f9f9;border-radius:10px;padding:15px;">
           <div id="pickedContent"></div>
           <button class="admin-btn" id="closePickedBtn" style="background:#999;margin-top:15px;padding:10px;font-size:14px;">关闭</button>
         </div>
@@ -97,7 +97,7 @@
       <button class="logout-btn" id="logoutBtn">退出登录</button>
     </div>
 
-    <!-- 详情区 -->
+    <!-- 详情区（用于查看已拾取列表中的瓶子） -->
     <div id="detailSection" class="detail-view">
       <button class="back-btn" id="backBtn">← 返回列表</button>
       <div class="admin-card">
@@ -108,10 +108,11 @@
 
   <script>
     const API_URL = '/api';
-    const ADMIN_PASSWORD = 'lsp616';
+    const ADMIN_PASSWORD = 'lsp616'; // 管理员密码
     let userInfo = null;
-    let currentBottleId = null;
+    let currentBottleId = null; // 当前查看的漂流瓶ID
 
+    // 调用 API
     async function callApi(action, data = {}) {
       const res = await fetch(`${API_URL}/${action}`, {
         method: 'POST',
@@ -121,6 +122,7 @@
       return res.json();
     }
 
+    // Toast
     function showToast(msg) {
       const t = document.createElement('div');
       t.className = 'toast';
@@ -129,16 +131,20 @@
       setTimeout(() => t.remove(), 2000);
     }
 
+    // 格式化时间
     function formatTime(d) {
       if (!d) return '';
       const date = new Date(d);
       return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
     }
 
+    // 初始化
     async function init() {
+      // 检查是否已登录
       const saved = localStorage.getItem('adminInfo') || localStorage.getItem('userInfo');
       if (saved) {
         userInfo = JSON.parse(saved);
+        // 同步保存到两个key
         localStorage.setItem('adminInfo', JSON.stringify(userInfo));
         localStorage.setItem('userInfo', JSON.stringify(userInfo));
         showMain();
@@ -157,6 +163,7 @@
       };
     }
 
+    // 登录
     async function login() {
       const pwd = document.getElementById('passwordInput').value;
       if (pwd !== ADMIN_PASSWORD) {
@@ -193,12 +200,14 @@
       }
     }
 
+    // 显示主界面
     function showMain() {
       document.getElementById('loginSection').style.display = 'none';
       document.getElementById('mainSection').style.display = 'block';
       document.getElementById('detailSection').classList.remove('active');
     }
 
+    // 加载统计
     async function loadStats() {
       try {
         const result = await callApi('stats');
@@ -212,6 +221,7 @@
       }
     }
 
+    // 加载列表
     async function loadList() {
       try {
         const result = await callApi('list');
@@ -238,6 +248,7 @@
       }
     }
 
+    // 拾取
     async function pickBottle() {
       const btn = document.getElementById('pickBtn');
       btn.disabled = true;
@@ -249,6 +260,7 @@
           showToast('拾取成功！');
           await loadStats();
           await loadList();
+          // 在当前页面显示拾取结果
           showPickedResult(result.data);
         } else {
           showToast(result.msg || '暂无新漂流瓶');
@@ -261,6 +273,7 @@
       }
     }
 
+    // 显示拾取结果（内联）
     function showPickedResult(b) {
       currentBottleId = b.id;
       const resultDiv = document.getElementById('pickedResult');
@@ -269,7 +282,7 @@
       let html = `<div style="font-size:15px;line-height:1.6;color:#333;margin-bottom:15px;">${b.content}</div>`;
 
       if (b.images && b.images.length > 0) {
-        html += `<div style="margin-bottom:15px;"><strong>📷 图片</strong><div style="margin-top:8px;">`;
+        html += `<div style="margin-bottom:15px;"><strong>📷 图片</strong><div class="detail-images" style="margin-top:8px;">`;
         html += b.images.map(url => `<img src="${url}" onclick="window.open('${url}')" style="width:80px;height:80px;object-fit:cover;border-radius:6px;margin-right:8px;">`).join('');
         html += `</div></div>`;
       }
@@ -280,6 +293,7 @@
 
       html += `<div style="font-size:12px;color:#999;">投放者：${b.userNickName || '匿名'} · ${formatTime(b.createTime)}</div>`;
 
+      // 加好友按钮
       if (b.userId !== userInfo.userId && b.userId !== 'anonymous') {
         html += `<button class="admin-btn" style="background:linear-gradient(135deg, #11998e, #38ef7d);margin-top:15px;padding:10px;font-size:14px;" onclick="addFriend()">💬 加TA为好友</button>`;
       }
@@ -288,6 +302,7 @@
       resultDiv.style.display = 'block';
     }
 
+    // 显示详情
     async function showDetail(id) {
       try {
         const result = await callApi('detail', { id });
@@ -318,6 +333,7 @@
 
       html += `<div style="font-size:13px;color:#999;margin-bottom:15px;">投放者：${b.userNickName || '匿名'}<br>投放时间：${formatTime(b.createTime)}</div>`;
 
+      // 加好友按钮
       if (b.userId !== userInfo.userId && b.userId !== 'anonymous') {
         html += `<button class="admin-btn" style="background:linear-gradient(135deg, #11998e, #38ef7d);margin-top:10px;" onclick="addFriend()">💬 加TA为好友</button>`;
       }
@@ -325,6 +341,7 @@
       document.getElementById('detailContent').innerHTML = html;
     }
 
+    // 加好友
     async function addFriend() {
       if (!currentBottleId) return;
       const message = prompt('给TA说句话吧（可选）：', '想和你交个朋友～');
@@ -346,6 +363,7 @@
       }
     }
 
+    // 退出
     function logout() {
       localStorage.removeItem('adminInfo');
       localStorage.removeItem('userInfo');
@@ -356,6 +374,7 @@
       showToast('已退出');
     }
 
+    // 显示分享二维码
     function showShareQR() {
       const appUrl = 'https://drift-bottle-dfc.pages.dev/';
       const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}`;
@@ -378,24 +397,33 @@
 
       document.body.appendChild(overlay);
 
+      // 绘制带品牌的二维码
       const canvas = document.getElementById('qrCanvas');
       const ctx = canvas.getContext('2d');
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
+        // 背景
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, 280, 320);
+
+        // 标题
         ctx.fillStyle = '#333333';
         ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('🍾 树洞漂流瓶', 140, 30);
+
+        // 二维码
         ctx.drawImage(img, 40, 50, 200, 200);
+
+        // 底部文字
         ctx.fillStyle = '#666666';
         ctx.font = '14px Arial';
         ctx.fillText('扫码来投放你的漂流瓶', 140, 280);
       };
       img.src = qrImageUrl;
 
+      // 保存二维码功能
       document.getElementById('saveQRBtn').addEventListener('click', () => {
         try {
           const canvas = document.getElementById('qrCanvas');
@@ -424,3 +452,4 @@
   </script>
 </body>
 </html>
+<!-- Force deploy 1787132146 -->
