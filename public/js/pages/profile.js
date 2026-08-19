@@ -20,15 +20,31 @@ Pages.profile = {
           </div>
         </div>
 
-        <div class="menu-section">
-          <div class="menu-item">
+        <div class="menu-section" style="display:block;">
+          ${userInfo.email ? `
+          <div class="menu-item" style="display:flex;">
+            <div class="menu-icon">📧</div>
+            <div class="menu-content">
+              <div class="menu-title">邮箱</div>
+              <div class="menu-desc">${userInfo.email}</div>
+            </div>
+          </div>
+          ` : ''}
+          <div class="menu-item" style="display:flex;">
             <div class="menu-icon">${isAdmin ? '🍾' : '📝'}</div>
             <div class="menu-content">
               <div class="menu-title">${isAdmin ? '管理员权限' : '投放权限'}</div>
               <div class="menu-desc">${isAdmin ? '可以投放和拾取漂流瓶' : '可以投放漂流瓶'}</div>
             </div>
           </div>
-          <div class="menu-item">
+          <div class="menu-item" style="display:flex;">
+            <div class="menu-icon">💬</div>
+            <div class="menu-content">
+              <div class="menu-title">消息</div>
+              <div class="menu-desc">查看好友和聊天</div>
+            </div>
+          </div>
+          <div class="menu-item" style="display:flex;">
             <div class="menu-icon">ℹ️</div>
             <div class="menu-content">
               <div class="menu-title">版本</div>

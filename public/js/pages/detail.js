@@ -79,6 +79,7 @@ Pages.detail = {
       </div>
       <div class="back-section">
         ${addFriendBtn}
+        <button class="back-btn" id="shareBtn" style="background:linear-gradient(135deg, #667eea, #764ba2);margin-top:10px;">📱 分享漂流瓶</button>
         <button class="back-btn" onclick="App.navigateBack()">返回</button>
       </div>
     `;
@@ -88,6 +89,43 @@ Pages.detail = {
     if (friendBtn) {
       friendBtn.addEventListener('click', () => this.addFriend());
     }
+
+    // 绑定分享事件
+    const shareBtn = document.getElementById('shareBtn');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', () => this.showShareQR());
+    }
+  },
+
+  // 显示分享二维码
+  showShareQR() {
+    const bottleUrl = `${window.location.origin}/#/detail?id=${this.bottleId}`;
+    // 使用在线API生成二维码图片
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(bottleUrl)}`;
+
+    // 创建弹窗
+    const overlay = document.createElement('div');
+    overlay.id = 'qrOverlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;';
+
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:20px;padding:30px;text-align:center;max-width:320px;width:90%;">
+        <div style="font-size:18px;font-weight:bold;color:#333;margin-bottom:5px;">🍾 树洞漂流瓶</div>
+        <div style="font-size:13px;color:#999;margin-bottom:20px;">扫码查看这个漂流瓶</div>
+        <div style="display:flex;justify-content:center;margin-bottom:15px;">
+          <img src="${qrImageUrl}" alt="二维码" style="width:200px;height:200px;border:1px solid #eee;" />
+        </div>
+        <div style="font-size:12px;color:#666;background:#f5f5f5;padding:10px;border-radius:8px;word-break:break-all;margin-bottom:15px;">${bottleUrl}</div>
+        <button onclick="document.getElementById('qrOverlay').remove()" style="width:100%;padding:12px;background:#667eea;color:#fff;border:none;border-radius:25px;font-size:15px;cursor:pointer;">关闭</button>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // 点击背景关闭
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
   },
 
   async addFriend() {
