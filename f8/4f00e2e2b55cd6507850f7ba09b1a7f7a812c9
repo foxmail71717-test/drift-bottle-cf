@@ -1,0 +1,35 @@
+public/js/pages/index.js
+  s_47e6bf0a10299f::t_056df090899407 75-79,87
+  s_47e6bf0a10299f::t_3139e178ec12bb 2
+  s_47e6bf0a10299f::t_65f5e0a3076874 117-141
+  s_47e6bf0a10299f::t_224ad153e68712 44-52
+  s_47e6bf0a10299f::t_57cf65f1455454 73-74,80-86,88-110
+  s_47e6bf0a10299f::t_81e874a0247d02 170
+public/js/pages/profile.js
+  s_47e6bf0a10299f::t_9df2fbf9c5c5fc 23,25,33,40,47
+  s_47e6bf0a10299f::t_a7e9310e553fbb 24,26-32,41-44
+public/index.html
+  s_47e6bf0a10299f::t_14ec4fbbe81975 48-56
+  s_47e6bf0a10299f::t_d96ede0e6b7ba5 6-8
+  s_47e6bf0a10299f::t_d60dc8619d277d 11-12
+  s_47e6bf0a10299f::t_6046ea3ad2b0dc 10,13-25
+public/js/pages/detail.js
+  s_47e6bf0a10299f::t_02295ce0634493 82,92-102,105-114,118-128
+  s_47e6bf0a10299f::t_f1c0898e57391f 103-104,115-117
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.40-trip",
+  "base_commit_sha": "f84f00e2e2b55cd6507850f7ba09b1a7f7a812c9",
+  "prompts": {},
+  "sessions": {
+    "s_47e6bf0a10299f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "32c52b76-faa2-4741-b9c2-ebac312a0a2f",
+        "model": "qwen3.7-plus"
+      },
+      "human_author": "Tingting Dou （窦庭庭） <doutt@trip.com>"
+    }
+  }
+}
