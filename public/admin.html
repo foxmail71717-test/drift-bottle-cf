@@ -77,6 +77,11 @@
       <div class="admin-card">
         <h3>🍾 拾取漂流瓶</h3>
         <button class="admin-btn" id="pickBtn">点击拾取</button>
+        <!-- 拾取结果展示区 v2 -->
+        <div id="pickedResult" style="display:none;margin-top:20px;padding-top:20px;border-top:1px solid #f0f0f0;">
+          <div id="pickedContent"></div>
+          <button class="admin-btn" id="closePickedBtn" style="background:#999;margin-top:15px;padding:10px;font-size:14px;">关闭</button>
+        </div>
       </div>
 
       <!-- 列表区 -->
@@ -87,11 +92,12 @@
         </div>
       </div>
 
-      <button class="logout-btn" id="logoutBtn">退出登录</button>
+      <button class="admin-btn" id="shareAppBtn" style="background:linear-gradient(135deg, #667eea, #764ba2);margin-top:10px;">📱 分享给朋友</button>
       <a href="/chat.html" style="display:block;text-align:center;margin-top:10px;color:#667eea;text-decoration:none;font-size:14px;">💬 查看消息和好友</a>
+      <button class="logout-btn" id="logoutBtn">退出登录</button>
     </div>
 
-    <!-- 详情区 -->
+    <!-- 详情区（用于查看已拾取列表中的瓶子） -->
     <div id="detailSection" class="detail-view">
       <button class="back-btn" id="backBtn">← 返回列表</button>
       <div class="admin-card">
@@ -151,6 +157,10 @@
       document.getElementById('pickBtn').onclick = pickBottle;
       document.getElementById('logoutBtn').onclick = logout;
       document.getElementById('backBtn').onclick = showMain;
+      document.getElementById('shareAppBtn').onclick = showShareQR;
+      document.getElementById('closePickedBtn').onclick = () => {
+        document.getElementById('pickedResult').style.display = 'none';
+      };
     }
 
     // 登录
@@ -250,7 +260,8 @@
           showToast('拾取成功！');
           await loadStats();
           await loadList();
-          showDetailById(result.data);
+          // 在当前页面显示拾取结果
+          showPickedResult(result.data);
         } else {
           showToast(result.msg || '暂无新漂流瓶');
         }
@@ -260,6 +271,35 @@
         btn.disabled = false;
         btn.textContent = '点击拾取';
       }
+    }
+
+    // 显示拾取结果（内联）
+    function showPickedResult(b) {
+      currentBottleId = b.id;
+      const resultDiv = document.getElementById('pickedResult');
+      const contentDiv = document.getElementById('pickedContent');
+
+      let html = `<div style="font-size:15px;line-height:1.6;color:#333;margin-bottom:15px;">${b.content}</div>`;
+
+      if (b.images && b.images.length > 0) {
+        html += `<div style="margin-bottom:15px;"><strong>📷 图片</strong><div class="detail-images" style="margin-top:8px;">`;
+        html += b.images.map(url => `<img src="${url}" onclick="window.open('${url}')" style="width:80px;height:80px;object-fit:cover;border-radius:6px;margin-right:8px;">`).join('');
+        html += `</div></div>`;
+      }
+
+      if (b.video) {
+        html += `<div style="margin-bottom:15px;"><strong>🎬 视频</strong><video src="${b.video}" style="width:100%;max-height:150px;border-radius:6px;margin-top:8px;" controls></video></div>`;
+      }
+
+      html += `<div style="font-size:12px;color:#999;">投放者：${b.userNickName || '匿名'} · ${formatTime(b.createTime)}</div>`;
+
+      // 加好友按钮
+      if (b.userId !== userInfo.userId && b.userId !== 'anonymous') {
+        html += `<button class="admin-btn" style="background:linear-gradient(135deg, #11998e, #38ef7d);margin-top:15px;padding:10px;font-size:14px;" onclick="addFriend()">💬 加TA为好友</button>`;
+      }
+
+      contentDiv.innerHTML = html;
+      resultDiv.style.display = 'block';
     }
 
     // 显示详情
@@ -332,6 +372,80 @@
       document.getElementById('mainSection').style.display = 'none';
       document.getElementById('detailSection').classList.remove('active');
       showToast('已退出');
+    }
+
+    // 显示分享二维码
+    function showShareQR() {
+      const appUrl = 'https://drift-bottle-dfc.pages.dev/';
+      const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}`;
+
+      const overlay = document.createElement('div');
+      overlay.id = 'qrOverlay';
+      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;';
+
+      overlay.innerHTML = `
+        <div style="background:#fff;border-radius:20px;padding:30px;text-align:center;max-width:320px;width:90%;">
+          <div style="font-size:18px;font-weight:bold;color:#333;margin-bottom:5px;">🍾 树洞漂流瓶</div>
+          <div style="font-size:13px;color:#999;margin-bottom:20px;">扫码来投放你的漂流瓶</div>
+          <div style="display:flex;justify-content:center;margin-bottom:15px;">
+            <canvas id="qrCanvas" width="280" height="320" style="border:1px solid #eee;border-radius:10px;"></canvas>
+          </div>
+          <button id="saveQRBtn" style="width:100%;padding:12px;background:#11998e;color:#fff;border:none;border-radius:25px;font-size:15px;cursor:pointer;margin-bottom:10px;">💾 保存二维码</button>
+          <button onclick="document.getElementById('qrOverlay').remove()" style="width:100%;padding:12px;background:#667eea;color:#fff;border:none;border-radius:25px;font-size:15px;cursor:pointer;">关闭</button>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+
+      // 绘制带品牌的二维码
+      const canvas = document.getElementById('qrCanvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        // 背景
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 280, 320);
+
+        // 标题
+        ctx.fillStyle = '#333333';
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('🍾 树洞漂流瓶', 140, 30);
+
+        // 二维码
+        ctx.drawImage(img, 40, 50, 200, 200);
+
+        // 底部文字
+        ctx.fillStyle = '#666666';
+        ctx.font = '14px Arial';
+        ctx.fillText('扫码来投放你的漂流瓶', 140, 280);
+      };
+      img.src = qrImageUrl;
+
+      // 保存二维码功能
+      document.getElementById('saveQRBtn').addEventListener('click', () => {
+        try {
+          const canvas = document.getElementById('qrCanvas');
+          canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '树洞漂流瓶二维码.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('二维码已保存');
+          }, 'image/png');
+        } catch (err) {
+          showToast('保存失败');
+        }
+      });
+
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+      });
     }
 
     init();

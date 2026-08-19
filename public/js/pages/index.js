@@ -128,14 +128,62 @@ Pages.index = {
         <div style="font-size:18px;font-weight:bold;color:#333;margin-bottom:5px;">🍾 树洞漂流瓶</div>
         <div style="font-size:13px;color:#999;margin-bottom:20px;">扫码来投放你的漂流瓶</div>
         <div style="display:flex;justify-content:center;margin-bottom:15px;">
-          <img src="${qrImageUrl}" alt="二维码" style="width:200px;height:200px;border:1px solid #eee;" />
+          <canvas id="qrCanvas" width="280" height="320" style="border:1px solid #eee;border-radius:10px;"></canvas>
         </div>
         <div style="font-size:12px;color:#666;background:#f5f5f5;padding:10px;border-radius:8px;word-break:break-all;margin-bottom:15px;">${appUrl}</div>
+        <button id="saveQRBtn" style="width:100%;padding:12px;background:#11998e;color:#fff;border:none;border-radius:25px;font-size:15px;cursor:pointer;margin-bottom:10px;">💾 保存二维码</button>
         <button onclick="document.getElementById('qrOverlay').remove()" style="width:100%;padding:12px;background:#667eea;color:#fff;border:none;border-radius:25px;font-size:15px;cursor:pointer;">关闭</button>
       </div>
     `;
 
     document.body.appendChild(overlay);
+
+    // 绘制带品牌的二维码
+    const canvas = document.getElementById('qrCanvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      // 背景
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 280, 320);
+
+      // 标题
+      ctx.fillStyle = '#333333';
+      ctx.font = 'bold 18px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('🍾 树洞漂流瓶', 140, 30);
+
+      // 二维码
+      ctx.drawImage(img, 40, 50, 200, 200);
+
+      // 底部文字
+      ctx.fillStyle = '#666666';
+      ctx.font = '14px Arial';
+      ctx.fillText('扫码来投放你的漂流瓶', 140, 280);
+    };
+    img.src = qrImageUrl;
+
+    // 保存二维码功能
+    document.getElementById('saveQRBtn').addEventListener('click', () => {
+      try {
+        const canvas = document.getElementById('qrCanvas');
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = '树洞漂流瓶二维码.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          Utils.showToast('二维码已保存');
+        }, 'image/png');
+      } catch (err) {
+        Utils.showToast('保存失败');
+      }
+    });
+
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) overlay.remove();
     });

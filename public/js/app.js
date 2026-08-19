@@ -45,14 +45,15 @@ const App = {
     const [path, query] = hash.split('?');
     const params = this.parseQuery(query);
 
-    // 未登录时跳转到邮箱登录页
-    const publicPages = ['/admin-login'];
-    if (!this.isLoggedIn() && !publicPages.includes(path)) {
+    // 未登录时直接跳转到邮箱登录页
+    if (!this.isLoggedIn()) {
+      // 如果是根路径或任何需要登录的页面，直接跳转到登录页
       location.href = '/login.html';
       return;
     }
 
-    if (this.isLoggedIn() && (path === '/login' || path === '/admin-login')) {
+    // 已登录用户在 /login 或 /admin-login 时跳转到首页
+    if (path === '/login' || path === '/admin-login') {
       location.hash = '/index';
       return;
     }
