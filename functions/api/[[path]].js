@@ -193,12 +193,21 @@ async function handleThrow(env, { userId, content, images, video, nickName }) {
     // 查找管理员用户
     const emailUsers = await getData(env, 'emailUsers') || {};
     const users = await getData(env, 'users') || {};
+
+    // 调试：打印所有用户
+    console.log('All users:', JSON.stringify(users));
+    console.log('All emailUsers:', JSON.stringify(emailUsers));
+
     const adminUser = Object.values(emailUsers).find(u =>
       (u.email && (env.ADMIN_IDS || '').split(',').filter(id => id).includes(u.email)) || u.role === 'admin'
     ) || Object.values(users).find(u => u.role === 'admin');
 
+    console.log('Found admin user:', adminUser);
+
     let actionTaken = 'bottle_created';
     let adminUserId = adminUser?.userId;
+
+    console.log('Admin userId:', adminUserId, 'Current userId:', userId);
 
     if (adminUserId && adminUserId !== userId) {
       // 检查是否已是好友
