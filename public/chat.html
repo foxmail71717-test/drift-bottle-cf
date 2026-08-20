@@ -165,15 +165,18 @@
     // 加载好友列表
     async function loadFriends() {
       try {
+        console.log('Loading friends for user:', userInfo.userId);
         const result = await callApi('friends', { userId: userInfo.userId });
+        console.log('Friends API result:', result);
         const friends = result.data || [];
+        console.log('Friends count:', friends.length);
 
         if (friends.length === 0) {
           document.getElementById('friendsList').innerHTML = '<div class="empty-state"><div class="icon">👥</div><div>还没有好友<br><small>投放漂流瓶时可以结交好友</small></div></div>';
           return;
         }
 
-        document.getElementById('friendsList').innerHTML = friends.map(f => `
+        const friendsHtml = friends.map(f => `
           <div class="friend-item" data-friend-id="${f.friendId}" data-friend-name="${f.nickname}">
             <div class="friend-avatar">${f.nickname[0]}</div>
             <div class="friend-info">
@@ -183,10 +186,15 @@
           </div>
         `).join('');
 
+        console.log('Friends HTML length:', friendsHtml.length);
+        document.getElementById('friendsList').innerHTML = friendsHtml;
+
         document.querySelectorAll('.friend-item').forEach(el => {
           el.onclick = () => openChat(el.dataset.friendId, el.dataset.friendName);
         });
+        console.log('Friends loaded successfully');
       } catch (e) {
+        console.error('Error loading friends:', e);
         showToast('加载失败');
       }
     }
