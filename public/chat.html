@@ -299,19 +299,30 @@
 
     // 加载聊天记录
     async function loadMessages() {
-      if (!currentFriend) return;
+      if (!currentFriend) {
+        console.log('No current friend selected');
+        return;
+      }
       try {
         const result = await callApi('messages', { userId: userInfo.userId, friendId: currentFriend.id });
         const messages = result.data || [];
+        console.log('Loaded messages:', messages.length, messages);
 
         const container = document.getElementById('chatMessages');
+        if (messages.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="icon">💬</div><div>暂无消息</div></div>';
+          return;
+        }
+
         container.innerHTML = messages.map(m => `
           <div class="message-time ${m.isMine ? 'mine' : ''}">${formatTime(m.createTime)}</div>
           <div class="message-bubble ${m.isMine ? 'message-mine' : 'message-other'}">${m.content}</div>
         `).join('');
 
         container.scrollTop = container.scrollHeight;
-      } catch (e) {}
+      } catch (e) {
+        console.error('Error loading messages:', e);
+      }
     }
 
     // 发送消息
