@@ -430,6 +430,18 @@
       if (!content || !currentFriend) return;
 
       input.value = '';
+
+      // 立即在UI上显示发送的消息（乐观更新）
+      const container = document.getElementById('chatMessages');
+      const tempMsgHtml = `
+        <div class="message-time mine">${formatTime(new Date().toISOString())}</div>
+        <div class="message-bubble message-mine" id="temp-msg">
+          <div>${content}</div>
+        </div>
+      `;
+      container.insertAdjacentHTML('beforeend', tempMsgHtml);
+      container.scrollTop = container.scrollHeight;
+
       try {
         const result = await callApi('sendMessage', {
           fromUserId: userInfo.userId,
@@ -437,11 +449,20 @@
           content
         });
         if (result.code === 0) {
+          // 发送成功，移除临时消息并加载真实消息
+          const tempMsg = document.getElementById('temp-msg');
+          if (tempMsg) tempMsg.parentElement.remove();
           await loadMessages();
         } else {
-          showToast(result.msg);
+          // 发送失败，移除临时消息并显示错误
+          const tempMsg = document.getElementById('temp-msg');
+          if (tempMsg) tempMsg.parentElement.remove();
+          showToast(result.msg || '发送失败');
         }
       } catch (e) {
+        // 发送失败，移除临时消息并显示错误
+        const tempMsg = document.getElementById('temp-msg');
+        if (tempMsg) tempMsg.parentElement.remove();
         showToast('发送失败');
       }
     }
