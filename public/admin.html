@@ -78,7 +78,8 @@
       <button class="admin-btn" id="bottleManageBtn" style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">🍾 漂流瓶管理</button>
 
       <button class="admin-btn" id="shareAppBtn" style="background:linear-gradient(135deg, #667eea, #764ba2);margin-top:10px;">📱 分享给朋友</button>
-      <a href="/chat.html" id="chatLink" style="display:block;text-align:center;margin-top:10px;color:#667eea;text-decoration:none;font-size:14px;position:relative;">💬 查看消息和好友 <span id="chatBadge" style="background:#f5576c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:5px;display:none;">0</span></a>
+      <a href="/chat.html" id="chatLink" style="display:block;text-align:center;margin-top:10px;color:#667eea;text-decoration:none;font-size:14px;position:relative;">💬 查看消息和好友</a>
+      <span id="chatBadge" style="display:none;background:#f5576c !important;color:#fff !important;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:5px;font-weight:bold;">0</span>
       <button class="logout-btn" id="logoutBtn">退出登录</button>
     </div>
 
@@ -148,10 +149,14 @@
         localStorage.setItem('adminInfo', JSON.stringify(userInfo));
         localStorage.setItem('userInfo', JSON.stringify(userInfo));
         showMain();
-        await loadStats();
-        await loadList();
-        await loadChatBadge();
-        startChatBadgePolling(); // 开始定时刷新未读提示
+
+        // 立即加载聊天未读提示，不等待其他加载完成
+        loadChatBadge();
+        startChatBadgePolling();
+
+        // 其他数据可以异步加载
+        loadStats();
+        loadList();
       }
 
       document.getElementById('loginBtn').onclick = login;
