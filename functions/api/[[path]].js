@@ -42,6 +42,8 @@ export async function onRequestPost(context) {
         return handleGetUserInfo(env, body, request);
       case 'unreadCount':
         return handleGetUnreadCount(env, body);
+      case 'unreadCountByFriend':
+        return handleGetUnreadCountByFriend(env, body);
       case 'markRead':
         return handleMarkRead(env, body);
       case 'allUsers':
@@ -672,6 +674,37 @@ async function handleGetUnreadCount(env, { userId }) {
       messages: unreadMessages,
       total: pendingRequests + unreadMessages
     }
+  });
+}
+
+// 获取每个好友的未读消息数
+async function handleGetUnreadCountByFriend(env, { userId }) {
+  const messages = await getData(env, 'messages') || {};
+  const readMarkers = await getData(env, 'readMarkers') || {};
+  const lastRead = readMarkers[userId] || {};
+  const friends = await getData(env, 'friends') || {};
+  const myFriends = Object.values(friends).filter(f => f.userId === userId);
+
+  const unreadByFriend = {};
+
+  for (const friend of myFriends) {
+    const chatKey = [userId, friend.friendId].sort().join('_');
+    const chatMessages = messages[chatKey] || [];
+    const friendLastRead = lastRead[friend.friendId] || 0;
+
+    const unreadCount = chatMessages.filter(m =>
+      m.fromUserId === friend.friendId &&
+      new Date(m.createTime).getTime() > friendLastRead
+    ).length;
+
+    if (unreadCount > 0) {
+      unreadByFriend[friend.friendId] = unreadCount;
+    }
+  }
+
+  return jsonResponse({
+    code: 0,
+    data: unreadByFriend
   });
 }
 

@@ -173,20 +173,36 @@
         const friends = result.data || [];
         console.log('Friends count:', friends.length);
 
+        // 获取每个好友的未读消息数
+        let unreadByFriend = {};
+        try {
+          const unreadResult = await callApi('unreadCountByFriend', { userId: userInfo.userId });
+          unreadByFriend = unreadResult.data || {};
+        } catch (e) {
+          console.error('Error loading unread counts:', e);
+        }
+
         if (friends.length === 0) {
           document.getElementById('friendsList').innerHTML = '<div class="empty-state"><div class="icon">👥</div><div>还没有好友<br><small>投放漂流瓶时可以结交好友</small></div></div>';
           return;
         }
 
-        const friendsHtml = friends.map(f => `
-          <div class="friend-item" data-friend-id="${f.friendId}" data-friend-name="${f.nickname}">
-            <div class="friend-avatar">${f.nickname[0]}</div>
-            <div class="friend-info">
-              <div class="friend-name">${f.nickname}</div>
-              <div class="friend-time">${f.email ? '📧 ' + f.email + ' · ' : ''}加好友于 ${formatTime(f.createTime)}</div>
+        const friendsHtml = friends.map(f => {
+          const unreadCount = unreadByFriend[f.friendId] || 0;
+          const unreadBadge = unreadCount > 0
+            ? `<span style="background:#f5576c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:8px;">${unreadCount}</span>`
+            : '';
+
+          return `
+            <div class="friend-item" data-friend-id="${f.friendId}" data-friend-name="${f.nickname}">
+              <div class="friend-avatar">${f.nickname[0]}</div>
+              <div class="friend-info">
+                <div class="friend-name">${f.nickname}${unreadBadge}</div>
+                <div class="friend-time">${f.email ? '📧 ' + f.email + ' · ' : ''}加好友于 ${formatTime(f.createTime)}</div>
+              </div>
             </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
 
         console.log('Friends HTML length:', friendsHtml.length);
         document.getElementById('friendsList').innerHTML = friendsHtml;
