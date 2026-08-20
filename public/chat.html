@@ -316,7 +316,14 @@
       }
       try {
         const result = await callApi('messages', { userId: userInfo.userId, friendId: currentFriend.id });
-        const messages = result.data || [];
+        let messages = result.data || [];
+
+        // 如果当前用户不是管理员，过滤掉自己发送的漂流瓶内容消息
+        const isAdmin = userInfo.role === 'admin';
+        if (!isAdmin) {
+          messages = messages.filter(m => !(m.isBottleContent && m.fromUserId === userInfo.userId));
+        }
+
         console.log('Loaded messages:', messages.length, messages);
 
         loadErrorCount = 0; // 成功时重置错误计数
