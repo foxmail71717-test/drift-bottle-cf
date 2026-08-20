@@ -153,7 +153,16 @@ Pages.throw = {
       });
 
       if (result.code === 0) {
-        Utils.showToast('投放成功！');
+        const actionTaken = result.data?.actionTaken;
+        let message = '投放成功！';
+
+        if (actionTaken === 'message_sent') {
+          message = '已发送给管理员 ✓';
+        } else if (actionTaken === 'friend_request_sent') {
+          message = '已向管理员发送好友请求 ✓';
+        }
+
+        Utils.showToast(message);
         setTimeout(() => App.navigateBack(), 1500);
       } else {
         Utils.showToast(result.msg || '投放失败');
