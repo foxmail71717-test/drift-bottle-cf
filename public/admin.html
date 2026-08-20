@@ -176,7 +176,8 @@
       btn.textContent = '登录中...';
 
       try {
-        const userId = 'admin_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4);
+        // 使用固定的管理员ID，避免每次登录都创建新用户
+        const userId = 'admin_fixed_001';
         const result = await callApi('login', { userId, nickName: '管理员', isAdmin: true });
 
         if (result.code === 0) {
