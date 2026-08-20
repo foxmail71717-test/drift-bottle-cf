@@ -74,7 +74,17 @@
         </div>
       </div>
 
-      <!-- 拾取区 -->
+      <!-- 漂流瓶管理入口 -->
+      <button class="admin-btn" id="bottleManageBtn" style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">🍾 漂流瓶管理</button>
+
+      <button class="admin-btn" id="shareAppBtn" style="background:linear-gradient(135deg, #667eea, #764ba2);margin-top:10px;">📱 分享给朋友</button>
+      <a href="/chat.html" style="display:block;text-align:center;margin-top:10px;color:#667eea;text-decoration:none;font-size:14px;">💬 查看消息和好友</a>
+      <button class="logout-btn" id="logoutBtn">退出登录</button>
+    </div>
+
+    <!-- 漂流瓶管理区 -->
+    <div id="bottleManageSection" class="detail-view">
+      <button class="back-btn" id="backFromBottleBtn">← 返回</button>
       <div class="admin-card">
         <h3>🍾 拾取漂流瓶</h3>
         <button class="admin-btn" id="pickBtn">点击拾取</button>
@@ -84,17 +94,12 @@
         </div>
       </div>
 
-      <!-- 列表区 -->
       <div class="admin-card">
         <h3>📜 已拾取 (<span id="countText">0</span>)</h3>
         <div id="bottleList">
           <div class="empty-tip">加载中...</div>
         </div>
       </div>
-
-      <button class="admin-btn" id="shareAppBtn" style="background:linear-gradient(135deg, #667eea, #764ba2);margin-top:10px;">📱 分享给朋友</button>
-      <a href="/chat.html" style="display:block;text-align:center;margin-top:10px;color:#667eea;text-decoration:none;font-size:14px;">💬 查看消息和好友</a>
-      <button class="logout-btn" id="logoutBtn">退出登录</button>
     </div>
 
     <!-- 详情区 -->
@@ -148,6 +153,8 @@
 
       document.getElementById('loginBtn').onclick = login;
       document.getElementById('passwordInput').onkeydown = (e) => { if (e.key === 'Enter') login(); };
+      document.getElementById('bottleManageBtn').onclick = showBottleManage;
+      document.getElementById('backFromBottleBtn').onclick = showMain;
       document.getElementById('pickBtn').onclick = pickBottle;
       document.getElementById('logoutBtn').onclick = logout;
       document.getElementById('backBtn').onclick = showMain;
@@ -197,6 +204,12 @@
       document.getElementById('loginSection').style.display = 'none';
       document.getElementById('mainSection').style.display = 'block';
       document.getElementById('detailSection').classList.remove('active');
+      document.getElementById('bottleManageSection').classList.remove('active');
+    }
+
+    function showBottleManage() {
+      document.getElementById('mainSection').style.display = 'none';
+      document.getElementById('bottleManageSection').classList.add('active');
     }
 
     async function loadStats() {
