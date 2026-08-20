@@ -344,7 +344,7 @@
 
           // 显示视频
           if (m.video) {
-            mediaHtml += `<div style="margin-top:8px;"><video src="${m.video}" style="max-width:250px;max-height:200px;border-radius:8px;" controls></video></div>`;
+            mediaHtml += `<div style="margin-top:8px;"><video src="${m.video}" style="max-width:250px;max-height:200px;border-radius:8px;cursor:pointer;" controls onclick="previewVideo('${m.video}')"></video></div>`;
           }
 
           return `
@@ -377,6 +377,20 @@
       overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:9999;cursor:pointer;';
       overlay.innerHTML = `
         <img src="${url}" style="max-width:90%;max-height:90%;border-radius:8px;" />
+        <div style="position:absolute;top:20px;right:20px;color:#fff;font-size:30px;cursor:pointer;" onclick="this.parentElement.remove()">✕</div>
+      `;
+      overlay.onclick = (e) => {
+        if (e.target === overlay) overlay.remove();
+      };
+      document.body.appendChild(overlay);
+    }
+
+    // 预览视频
+    function previewVideo(url) {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:9999;';
+      overlay.innerHTML = `
+        <video src="${url}" style="max-width:90%;max-height:90%;border-radius:8px;" controls autoplay></video>
         <div style="position:absolute;top:20px;right:20px;color:#fff;font-size:30px;cursor:pointer;" onclick="this.parentElement.remove()">✕</div>
       `;
       overlay.onclick = (e) => {
