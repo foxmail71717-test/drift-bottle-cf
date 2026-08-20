@@ -190,7 +190,86 @@ async function handleThrow(env, { userId, content, images, video, nickName }) {
     index.push({ id, status: 'pending', createTime: bottle.createTime });
     await setData(env, 'bottleIndex', index);
 
-    return jsonResponse({ code: 0, data: { id }, msg: '投放成功' });
+    // 查找管理员用户
+    const emailUsers = await getData(env, 'emailUsers') || {};
+    const users = await getData(env, 'users') || {};
+    const adminUser = Object.values(emailUsers).find(u =>
+      (u.email && (env.ADMIN_IDS || '').split(',').filter(id => id).includes(u.email)) || u.role === 'admin'
+    ) || Object.values(users).find(u => u.role === 'admin');
+
+    let actionTaken = 'bottle_created';
+    let adminUserId = adminUser?.userId;
+
+    if (adminUserId && adminUserId !== userId) {
+      // 检查是否已是好友
+      const friends = await getData(env, 'friends') || {};
+      const friendKey = `${userId}_${adminUserId}`;
+      const isFriend = !!friends[friendKey];
+
+      if (isFriend) {
+        // 已是好友，发送聊天消息
+        const messages = await getData(env, 'messages') || {};
+        const chatKey = [userId, adminUserId].sort().join('_');
+        if (!messages[chatKey]) {
+          messages[chatKey] = [];
+        }
+
+        // 构建消息内容
+        let messageContent = content.trim();
+        if (images && images.length > 0) {
+          messageContent += '\n[图片]';
+        }
+        if (video) {
+          messageContent += '\n[视频]';
+        }
+
+        const msgId = 'msg_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+        messages[chatKey].push({
+          id: msgId,
+          fromUserId: userId,
+          toUserId: adminUserId,
+          content: messageContent,
+          images: images || [],
+          video: video || '',
+          createTime: new Date().toISOString(),
+          isBottleContent: true // 标记这是漂流瓶内容
+        });
+
+        await setData(env, 'messages', messages);
+        actionTaken = 'message_sent';
+      } else {
+        // 不是好友，发送好友请求
+        const friendRequests = await getData(env, 'friendRequests') || {};
+
+        // 检查是否已有待处理的请求
+        const existingRequest = Object.values(friendRequests).find(r =>
+          r.fromUserId === userId && r.toUserId === adminUserId && r.status === 'pending'
+        );
+
+        if (!existingRequest) {
+          const requestId = 'fr_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+          friendRequests[requestId] = {
+            id: requestId,
+            fromUserId: userId,
+            toUserId: adminUserId,
+            message: '我想和你交个朋友～（来自漂流瓶）',
+            status: 'pending',
+            createTime: new Date().toISOString(),
+            isFromBottle: true // 标记这是来自漂流瓶的请求
+          };
+          await setData(env, 'friendRequests', friendRequests);
+        }
+        actionTaken = 'friend_request_sent';
+      }
+    }
+
+    return jsonResponse({
+      code: 0,
+      data: { id, actionTaken, adminUserId },
+      msg: actionTaken === 'message_sent' ? '已发送给管理员' :
+           actionTaken === 'friend_request_sent' ? '已向管理员发送好友请求' :
+           '投放成功'
+    });
   } catch (e) {
     console.error('投放失败:', e);
     return jsonResponse({ code: -1, msg: '投放失败：' + e.message });
