@@ -172,15 +172,20 @@
     // 加载聊天未读提示
     async function loadChatBadge() {
       try {
+        console.log('Loading chat badge for user:', userInfo.userId);
         const result = await callApi('unreadCount', { userId: userInfo.userId });
+        console.log('Chat badge API result:', result);
         if (result.code === 0 && result.data) {
           const total = result.data.total || 0;
           const badge = document.getElementById('chatBadge');
-          if (total > 0) {
-            badge.style.display = 'inline';
-            badge.textContent = total;
-          } else {
-            badge.style.display = 'none';
+          console.log('Badge element:', badge, 'Total:', total);
+          if (badge) {
+            if (total > 0) {
+              badge.style.display = 'inline';
+              badge.textContent = total;
+            } else {
+              badge.style.display = 'none';
+            }
           }
         }
       } catch (e) {
