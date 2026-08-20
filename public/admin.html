@@ -78,7 +78,7 @@
       <button class="admin-btn" id="bottleManageBtn" style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">🍾 漂流瓶管理</button>
 
       <button class="admin-btn" id="shareAppBtn" style="background:linear-gradient(135deg, #667eea, #764ba2);margin-top:10px;">📱 分享给朋友</button>
-      <a href="/chat.html" style="display:block;text-align:center;margin-top:10px;color:#667eea;text-decoration:none;font-size:14px;">💬 查看消息和好友</a>
+      <a href="/chat.html" id="chatLink" style="display:block;text-align:center;margin-top:10px;color:#667eea;text-decoration:none;font-size:14px;position:relative;">💬 查看消息和好友 <span id="chatBadge" style="background:#f5576c;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;display:none;"></span></a>
       <button class="logout-btn" id="logoutBtn">退出登录</button>
     </div>
 
@@ -150,6 +150,7 @@
         showMain();
         await loadStats();
         await loadList();
+        await loadChatBadge();
       }
 
       document.getElementById('loginBtn').onclick = login;
@@ -163,6 +164,25 @@
       document.getElementById('closePickedBtn').onclick = () => {
         document.getElementById('pickedResult').style.display = 'none';
       };
+    }
+
+    // 加载聊天未读提示
+    async function loadChatBadge() {
+      try {
+        const result = await callApi('unreadCount', { userId: userInfo.userId });
+        if (result.code === 0 && result.data) {
+          const total = result.data.total || 0;
+          const badge = document.getElementById('chatBadge');
+          if (total > 0) {
+            badge.style.display = 'inline';
+            badge.textContent = total;
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+      } catch (e) {
+        console.error('Error loading chat badge:', e);
+      }
     }
 
     async function login() {
