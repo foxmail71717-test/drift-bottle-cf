@@ -337,7 +337,7 @@
           if (m.images && m.images.length > 0) {
             mediaHtml += '<div style="margin-top:8px;">';
             mediaHtml += m.images.map(url =>
-              `<img src="${url}" style="max-width:200px;max-height:200px;border-radius:8px;margin-right:4px;margin-bottom:4px;cursor:pointer;" onclick="window.open('${url}')" />`
+              `<img src="${url}" style="max-width:200px;max-height:200px;border-radius:8px;margin-right:4px;margin-bottom:4px;cursor:pointer;" onclick="previewImage('${url}')" />`
             ).join('');
             mediaHtml += '</div>';
           }
@@ -369,6 +369,20 @@
           }
         }
       }
+    }
+
+    // 预览图片
+    function previewImage(url) {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:9999;cursor:pointer;';
+      overlay.innerHTML = `
+        <img src="${url}" style="max-width:90%;max-height:90%;border-radius:8px;" />
+        <div style="position:absolute;top:20px;right:20px;color:#fff;font-size:30px;cursor:pointer;" onclick="this.parentElement.remove()">✕</div>
+      `;
+      overlay.onclick = (e) => {
+        if (e.target === overlay) overlay.remove();
+      };
+      document.body.appendChild(overlay);
     }
 
     // 发送消息
