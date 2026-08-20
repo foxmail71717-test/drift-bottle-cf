@@ -92,6 +92,8 @@
     let userInfo = null;
     let currentFriend = null;
     let messageTimer = null;
+    let loadErrorCount = 0;
+    const MAX_ERRORS = 3;
 
     async function callApi(action, data = {}) {
       const res = await fetch(`${API_URL}/${action}`, {
@@ -289,9 +291,10 @@
       // 标记为已读
       await callApi('markRead', { userId: userInfo.userId, friendId });
 
+      loadErrorCount = 0; // 重置错误计数
       await loadMessages();
-      // 定时刷新消息
-      messageTimer = setInterval(loadMessages, 3000);
+      // 定时刷新消息（改为10秒，减少请求频率）
+      messageTimer = setInterval(loadMessages, 10000);
     }
 
     // 关闭聊天
@@ -316,6 +319,8 @@
         const messages = result.data || [];
         console.log('Loaded messages:', messages.length, messages);
 
+        loadErrorCount = 0; // 成功时重置错误计数
+
         const container = document.getElementById('chatMessages');
         if (messages.length === 0) {
           container.innerHTML = '<div class="empty-state"><div class="icon">💬</div><div>暂无消息</div></div>';
@@ -330,6 +335,15 @@
         container.scrollTop = container.scrollHeight;
       } catch (e) {
         console.error('Error loading messages:', e);
+        loadErrorCount++;
+        // 连续错误过多时停止轮询
+        if (loadErrorCount >= MAX_ERRORS) {
+          console.warn('Too many errors, stopping message polling');
+          if (messageTimer) {
+            clearInterval(messageTimer);
+            messageTimer = null;
+          }
+        }
       }
     }
 
