@@ -1,0 +1,22 @@
+functions/api/[[path]].js
+  s_47e6bf0a10299f::t_e000a2a6e72bae 680-710
+  s_47e6bf0a10299f::t_26dfebd5f6963f 45-46
+public/chat.html
+  s_47e6bf0a10299f::t_477633480f6007 176-184,190-202,204-205
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.40-trip",
+  "base_commit_sha": "bc65c826fb6881263716a897114d9496e601f1eb",
+  "prompts": {},
+  "sessions": {
+    "s_47e6bf0a10299f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "32c52b76-faa2-4741-b9c2-ebac312a0a2f",
+        "model": "qwen3.7-plus"
+      },
+      "human_author": "Tingting Dou （窦庭庭） <doutt@trip.com>"
+    }
+  }
+}
