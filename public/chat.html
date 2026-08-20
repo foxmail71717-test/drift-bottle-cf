@@ -149,6 +149,17 @@
 
       await loadFriends();
       await loadRequests();
+
+      // 检查URL参数，如果有friendId则自动打开聊天
+      const urlParams = new URLSearchParams(window.location.search);
+      const friendId = urlParams.get('friendId');
+      const friendName = urlParams.get('friendName');
+      if (friendId && friendName) {
+        // 延迟一下确保好友列表加载完成
+        setTimeout(() => {
+          openChat(friendId, decodeURIComponent(friendName));
+        }, 500);
+      }
     }
 
     // 加载好友列表

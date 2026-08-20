@@ -116,6 +116,7 @@
     const ADMIN_PASSWORD = 'lsp616';
     let userInfo = null;
     let currentBottleId = null;
+    let currentBottleUserId = null;
 
     async function callApi(action, data = {}) {
       const res = await fetch(`${API_URL}/${action}`, {
@@ -275,8 +276,9 @@
       }
     }
 
-    function showPickedResult(b) {
+    async function showPickedResult(b) {
       currentBottleId = b.id;
+      currentBottleUserId = b.userId; // 保存投放者的userId
       const resultDiv = document.getElementById('pickedResult');
       const contentDiv = document.getElementById('pickedContent');
 
@@ -295,11 +297,34 @@
       html += `<div style="font-size:12px;color:#999;">投放者：${b.userNickName || '匿名'} · ${formatTime(b.createTime)}</div>`;
 
       if (b.userId !== userInfo.userId && b.userId !== 'anonymous') {
-        html += `<button class="admin-btn" style="background:linear-gradient(135deg, #11998e, #38ef7d);margin-top:15px;padding:10px;font-size:14px;" onclick="addFriend()">💬 加TA为好友</button>`;
+        // 检查是否已是好友
+        const isFriend = await checkIsFriend(b.userId);
+        if (isFriend) {
+          html += `<button class="admin-btn" style="background:linear-gradient(135deg, #667eea, #764ba2);margin-top:15px;padding:10px;font-size:14px;" onclick="openChat('${b.userId}', '${b.userNickName || '匿名用户'}')">💬 聊天</button>`;
+        } else {
+          html += `<button class="admin-btn" style="background:linear-gradient(135deg, #11998e, #38ef7d);margin-top:15px;padding:10px;font-size:14px;" onclick="addFriend()">💬 加TA为好友</button>`;
+        }
       }
 
       contentDiv.innerHTML = html;
       resultDiv.style.display = 'block';
+    }
+
+    // 检查是否已是好友
+    async function checkIsFriend(targetUserId) {
+      try {
+        const result = await callApi('friends', { userId: userInfo.userId });
+        const friends = result.data || [];
+        return friends.some(f => f.friendId === targetUserId);
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // 打开聊天页面
+    function openChat(friendId, friendName) {
+      // 跳转到聊天页面，并传递好友信息
+      window.location.href = `/chat.html?friendId=${friendId}&friendName=${encodeURIComponent(friendName)}`;
     }
 
     async function showDetail(id) {
