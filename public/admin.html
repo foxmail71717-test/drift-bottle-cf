@@ -151,6 +151,7 @@
         await loadStats();
         await loadList();
         await loadChatBadge();
+        startChatBadgePolling(); // 开始定时刷新未读提示
       }
 
       document.getElementById('loginBtn').onclick = login;
@@ -165,6 +166,8 @@
         document.getElementById('pickedResult').style.display = 'none';
       };
     }
+
+    let chatBadgeTimer = null;
 
     // 加载聊天未读提示
     async function loadChatBadge() {
@@ -182,6 +185,20 @@
         }
       } catch (e) {
         console.error('Error loading chat badge:', e);
+      }
+    }
+
+    // 开始定时刷新未读提示
+    function startChatBadgePolling() {
+      if (chatBadgeTimer) clearInterval(chatBadgeTimer);
+      chatBadgeTimer = setInterval(loadChatBadge, 10000); // 每10秒刷新一次
+    }
+
+    // 停止定时刷新
+    function stopChatBadgePolling() {
+      if (chatBadgeTimer) {
+        clearInterval(chatBadgeTimer);
+        chatBadgeTimer = null;
       }
     }
 
@@ -406,6 +423,7 @@
     }
 
     function logout() {
+      stopChatBadgePolling(); // 停止定时刷新
       localStorage.removeItem('adminInfo');
       localStorage.removeItem('userInfo');
       userInfo = null;
