@@ -327,10 +327,34 @@
           return;
         }
 
-        container.innerHTML = messages.map(m => `
-          <div class="message-time ${m.isMine ? 'mine' : ''}">${formatTime(m.createTime)}</div>
-          <div class="message-bubble ${m.isMine ? 'message-mine' : 'message-other'}">${m.content}</div>
-        `).join('');
+        container.innerHTML = messages.map(m => {
+          // 移除内容中的 [图片] 和 [视频] 占位符
+          let content = m.content.replace(/\[图片\]/g, '').replace(/\[视频\]/g, '').trim();
+
+          let mediaHtml = '';
+
+          // 显示图片
+          if (m.images && m.images.length > 0) {
+            mediaHtml += '<div style="margin-top:8px;">';
+            mediaHtml += m.images.map(url =>
+              `<img src="${url}" style="max-width:200px;max-height:200px;border-radius:8px;margin-right:4px;margin-bottom:4px;cursor:pointer;" onclick="window.open('${url}')" />`
+            ).join('');
+            mediaHtml += '</div>';
+          }
+
+          // 显示视频
+          if (m.video) {
+            mediaHtml += `<div style="margin-top:8px;"><video src="${m.video}" style="max-width:250px;max-height:200px;border-radius:8px;" controls></video></div>`;
+          }
+
+          return `
+            <div class="message-time ${m.isMine ? 'mine' : ''}">${formatTime(m.createTime)}</div>
+            <div class="message-bubble ${m.isMine ? 'message-mine' : 'message-other'}">
+              ${content ? `<div>${content}</div>` : ''}
+              ${mediaHtml}
+            </div>
+          `;
+        }).join('');
 
         container.scrollTop = container.scrollHeight;
       } catch (e) {
