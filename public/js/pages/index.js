@@ -116,7 +116,7 @@ Pages.index = {
 
   // 显示分享二维码
   showShareQR() {
-    const appUrl = 'https://drift-bottle-dfc.pages.dev/';
+    const appUrl = 'https://drift-bottle-new.pages.dev/';
     const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}`;
 
     const overlay = document.createElement('div');
