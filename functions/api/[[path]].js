@@ -190,17 +190,19 @@ async function handleThrow(env, { userId, content, images, video, nickName }) {
     index.push({ id, status: 'pending', createTime: bottle.createTime });
     await setData(env, 'bottleIndex', index);
 
-    // 查找管理员用户
+    // 查找管理员用户 - 优先查找固定的管理员ID
     const emailUsers = await getData(env, 'emailUsers') || {};
     const users = await getData(env, 'users') || {};
 
-    // 调试：打印所有用户
-    console.log('All users:', JSON.stringify(users));
-    console.log('All emailUsers:', JSON.stringify(emailUsers));
+    // 首先查找固定的管理员ID
+    let adminUser = users['admin_fixed_001'] || emailUsers['admin_fixed_001'];
 
-    const adminUser = Object.values(emailUsers).find(u =>
-      (u.email && (env.ADMIN_IDS || '').split(',').filter(id => id).includes(u.email)) || u.role === 'admin'
-    ) || Object.values(users).find(u => u.role === 'admin');
+    // 如果没找到，再查找其他管理员
+    if (!adminUser) {
+      adminUser = Object.values(emailUsers).find(u =>
+        (u.email && (env.ADMIN_IDS || '').split(',').filter(id => id).includes(u.email)) || u.role === 'admin'
+      ) || Object.values(users).find(u => u.role === 'admin');
+    }
 
     console.log('Found admin user:', adminUser);
 
