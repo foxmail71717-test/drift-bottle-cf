@@ -357,6 +357,7 @@
           return `
             <div class="message-time ${m.isMine ? 'mine' : ''}">${formatTime(m.createTime)}</div>
             <div class="message-bubble ${m.isMine ? 'message-mine' : 'message-other'}">
+              ${!m.isMine && m.fromNickname ? `<div style="font-size:12px;color:#667eea;margin-bottom:4px;font-weight:bold;">${m.fromNickname}</div>` : ''}
               ${content ? `<div>${content}</div>` : ''}
               ${mediaHtml}
             </div>
