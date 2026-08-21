@@ -169,6 +169,36 @@ async function handleThrow(env, { userId, content, images, video, nickName }) {
     return jsonResponse({ code: -1, msg: '文字内容不能为空' });
   }
 
+  // 检查文件大小（后端二次验证）
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+  const MAX_VIDEO_SIZE = 10 * 1024 * 1024; // 10MB
+
+  // 估算base64大小（base64比原文件大约33%）
+  if (images && images.length > 0) {
+    for (let i = 0; i < images.length; i++) {
+      const estimatedSize = images[i].length * 0.75; // base64转回原大小
+      if (estimatedSize > MAX_IMAGE_SIZE) {
+        return jsonResponse({ code: -1, msg: `图片${i + 1}太大，请压缩后重试` });
+      }
+    }
+  }
+
+  if (video) {
+    const estimatedSize = video.length * 0.75;
+    if (estimatedSize > MAX_VIDEO_SIZE) {
+      return jsonResponse({ code: -1, msg: '视频太大（超过10MB），请压缩后重试' });
+    }
+  }
+
+  // 检查总大小是否超过KV限制（25MB）
+  const totalSize = (content.length || 0) +
+    (images ? images.reduce((sum, img) => sum + img.length, 0) : 0) +
+    (video ? video.length : 0);
+
+  if (totalSize > 20 * 1024 * 1024) { // 限制20MB，留一些余量
+    return jsonResponse({ code: -1, msg: '内容太大，请减少图片或视频大小' });
+  }
+
   const id = 'b_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
 
   const bottle = {
