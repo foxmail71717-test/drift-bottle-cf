@@ -310,11 +310,17 @@
         const result = await callApi('pick', { userId: userInfo.userId });
         console.log('Pick API result:', result);
         if (result.code === 0 && result.data) {
+          console.log('Pick successful, showing result:', result.data);
           showToast('拾取成功！');
+          console.log('Loading stats...');
           await loadStats();
+          console.log('Loading list...');
           await loadList();
+          console.log('Showing picked result...');
           showPickedResult(result.data);
+          console.log('Pick bottle completed successfully');
         } else {
+          console.log('Pick returned no data or error:', result);
           showToast(result.msg || '暂无新漂流瓶');
         }
       } catch (e) {
