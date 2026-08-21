@@ -685,26 +685,40 @@ async function handleMigrateMessages(env) {
   const FIXED_ADMIN_ID = 'admin_fixed_001';
   let migratedCount = 0;
 
-  // 找出所有使用旧管理员ID的聊天
-  const oldAdminPattern = /^admin_[a-z0-9]+_/;
-  const chatsToMigrate = [];
+  // 找出所有需要修复的聊天（包含旧admin ID作为friend ID的错误聊天）
+  const chatsToFix = [];
 
   for (const chatKey of Object.keys(messages)) {
-    // 检查是否包含旧的管理员ID（不是admin_fixed_001）
-    if (chatKey.includes('admin_') && !chatKey.includes(FIXED_ADMIN_ID)) {
-      // 提取好友ID
+    // 检查是否是错误的聊天key（包含旧admin ID作为friend ID）
+    if (chatKey.includes('admin_msyfl26dndqk') || chatKey.includes('admin_msykr9b8y02a')) {
+      // 这些是错误的聊天，需要找到正确的friend ID
+      // 从原始数据推断：admin_msyfl26dndqk_eu_msyfsgi6e4dgf0 应该迁移到 admin_fixed_001_eu_msyfsgi6e4dgf0
       const parts = chatKey.split('_');
-      let friendId = null;
 
-      // 聊天key格式：admin_xxx_friendId 或 friendId_admin_xxx
-      if (parts[0].startsWith('admin_')) {
-        friendId = parts.slice(2).join('_'); // 好友ID可能包含下划线
-      } else {
-        friendId = parts.slice(0, -2).join('_');
+      // 找到真正的friend ID（eu_开头的）
+      let friendId = null;
+      for (const part of parts) {
+        if (part.startsWith('eu_')) {
+          friendId = part;
+          break;
+        }
+      }
+
+      // 如果没有找到eu_开头的，尝试从其他聊天推断
+      if (!friendId) {
+        // 检查是否有对应的正确聊天
+        const possibleFriendIds = ['eu_msyfsgi6e4dgf0', 'eu_mt1rw9yf68snin', 'test_user_123'];
+        for (const pid of possibleFriendIds) {
+          const correctKey = [FIXED_ADMIN_ID, pid].sort().join('_');
+          if (messages[correctKey]) {
+            friendId = pid;
+            break;
+          }
+        }
       }
 
       if (friendId) {
-        chatsToMigrate.push({
+        chatsToFix.push({
           oldKey: chatKey,
           friendId: friendId,
           messages: messages[chatKey]
@@ -713,8 +727,8 @@ async function handleMigrateMessages(env) {
     }
   }
 
-  // 迁移消息
-  for (const chat of chatsToMigrate) {
+  // 修复消息
+  for (const chat of chatsToFix) {
     const newKey = [FIXED_ADMIN_ID, chat.friendId].sort().join('_');
 
     if (!messages[newKey]) {
@@ -725,11 +739,11 @@ async function handleMigrateMessages(env) {
     for (const msg of chat.messages) {
       const exists = messages[newKey].some(m => m.id === msg.id);
       if (!exists) {
-        // 更新消息中的用户ID
-        if (msg.fromUserId && msg.fromUserId.startsWith('admin_') && msg.fromUserId !== FIXED_ADMIN_ID) {
+        // 确保消息中的用户ID是正确的
+        if (msg.fromUserId && msg.fromUserId !== FIXED_ADMIN_ID && msg.fromUserId !== chat.friendId) {
           msg.fromUserId = FIXED_ADMIN_ID;
         }
-        if (msg.toUserId && msg.toUserId.startsWith('admin_') && msg.toUserId !== FIXED_ADMIN_ID) {
+        if (msg.toUserId && msg.toUserId !== FIXED_ADMIN_ID && msg.toUserId !== chat.friendId) {
           msg.toUserId = FIXED_ADMIN_ID;
         }
         messages[newKey].push(msg);
@@ -737,7 +751,7 @@ async function handleMigrateMessages(env) {
       }
     }
 
-    // 删除旧的聊天key
+    // 删除错误的聊天key
     delete messages[chat.oldKey];
   }
 
@@ -746,9 +760,9 @@ async function handleMigrateMessages(env) {
 
   return jsonResponse({
     code: 0,
-    msg: `迁移完成，共迁移 ${migratedCount} 条消息`,
+    msg: `修复完成，共迁移 ${migratedCount} 条消息`,
     data: {
-      migratedChats: chatsToMigrate.length,
+      fixedChats: chatsToFix.length,
       migratedMessages: migratedCount
     }
   });
