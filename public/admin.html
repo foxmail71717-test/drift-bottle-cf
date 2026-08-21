@@ -300,12 +300,15 @@
     }
 
     async function pickBottle() {
+      console.log('pickBottle called, userInfo:', userInfo);
       const btn = document.getElementById('pickBtn');
       btn.disabled = true;
       btn.textContent = '拾取中...';
 
       try {
+        console.log('Calling pick API with userId:', userInfo.userId);
         const result = await callApi('pick', { userId: userInfo.userId });
+        console.log('Pick API result:', result);
         if (result.code === 0 && result.data) {
           showToast('拾取成功！');
           await loadStats();
@@ -315,6 +318,7 @@
           showToast(result.msg || '暂无新漂流瓶');
         }
       } catch (e) {
+        console.error('Pick bottle error:', e);
         showToast('拾取失败');
       } finally {
         btn.disabled = false;
