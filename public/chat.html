@@ -99,15 +99,28 @@
     const MAX_ERRORS = 3;
 
     async function callApi(action, data = {}) {
-      const res = await fetch(`${API_URL}/${action}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': userInfo?.userId || ''
-        },
-        body: JSON.stringify(data)
-      });
-      return res.json();
+      console.log('callApi called:', action, data);
+      try {
+        const res = await fetch(`${API_URL}/${action}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': userInfo?.userId || ''
+          },
+          body: JSON.stringify(data)
+        });
+        console.log('API response status:', res.status);
+        if (!res.ok) {
+          console.error('API response not OK:', res.status, res.statusText);
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        const json = await res.json();
+        console.log('API response parsed:', json);
+        return json;
+      } catch (e) {
+        console.error('callApi error:', e);
+        throw e;
+      }
     }
 
     function showToast(msg) {
