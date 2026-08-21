@@ -299,6 +299,7 @@
 
     // 打开聊天
     async function openChat(friendId, friendName) {
+      console.log('openChat called with friendId:', friendId, 'friendName:', friendName);
       currentFriend = { id: friendId, name: friendName };
       document.getElementById('chatFriendName').textContent = friendName;
       document.getElementById('listView').style.display = 'none';
