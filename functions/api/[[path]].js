@@ -51,6 +51,8 @@ export async function onRequestPost(context) {
         return handleSendMessage(env, body);
       case 'messages':
         return handleGetMessages(env, body);
+      case 'messageMedia':
+        return handleGetMessageMedia(env, body);
       case 'debugMessages':
         return handleDebugMessages(env, body);
       case 'migrateMessages':
@@ -683,6 +685,35 @@ async function handleGetMessages(env, { userId, friendId, limit = 50 }) {
   } catch (e) {
     console.error('handleGetMessages error:', e);
     return jsonResponse({ code: -1, msg: '获取消息失败: ' + e.message });
+  }
+}
+
+// 获取单条消息的媒体数据
+async function handleGetMessageMedia(env, { messageId }) {
+  try {
+    const messages = await getData(env, 'messages') || {};
+
+    // 在所有聊天中查找这条消息
+    for (const chatKey of Object.keys(messages)) {
+      const chatMessages = messages[chatKey] || [];
+      const msg = chatMessages.find(m => m.id === messageId);
+
+      if (msg) {
+        return jsonResponse({
+          code: 0,
+          data: {
+            id: msg.id,
+            images: msg.images || [],
+            video: msg.video || ''
+          }
+        });
+      }
+    }
+
+    return jsonResponse({ code: -1, msg: '消息不存在' });
+  } catch (e) {
+    console.error('handleGetMessageMedia error:', e);
+    return jsonResponse({ code: -1, msg: '获取媒体失败: ' + e.message });
   }
 }
 

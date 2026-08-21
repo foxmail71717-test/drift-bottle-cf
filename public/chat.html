@@ -418,18 +418,18 @@
 
           let mediaHtml = '';
 
-          // 显示图片
-          if (m.images && m.images.length > 0) {
-            mediaHtml += '<div style="margin-top:8px;">';
-            mediaHtml += m.images.map(url =>
-              `<img src="${url}" style="max-width:200px;max-height:200px;border-radius:8px;margin-right:4px;margin-bottom:4px;cursor:pointer;" onclick="previewImage('${url}')" />`
-            ).join('');
-            mediaHtml += '</div>';
+          // 如果有图片，显示加载占位符
+          if (m.hasImages) {
+            mediaHtml += `<div class="message-media" data-message-id="${m.id}" data-media-type="images" style="margin-top:8px;">
+              <div style="color:#999;font-size:12px;">📷 加载中...</div>
+            </div>`;
           }
 
-          // 显示视频
-          if (m.video) {
-            mediaHtml += `<div style="margin-top:8px;"><video src="${m.video}" style="max-width:250px;max-height:200px;border-radius:8px;cursor:pointer;" controls onclick="previewVideo('${m.video}')"></video></div>`;
+          // 如果有视频，显示加载占位符
+          if (m.hasVideo) {
+            mediaHtml += `<div class="message-media" data-message-id="${m.id}" data-media-type="video" style="margin-top:8px;">
+              <div style="color:#999;font-size:12px;">🎬 加载中...</div>
+            </div>`;
           }
 
           return `
@@ -443,6 +443,14 @@
         }).join('');
 
         container.scrollTop = container.scrollHeight;
+
+        // 按需加载媒体数据
+        const mediaElements = container.querySelectorAll('.message-media');
+        for (const element of mediaElements) {
+          const messageId = element.dataset.messageId;
+          const mediaType = element.dataset.mediaType;
+          loadMessageMedia(messageId, mediaType, element);
+        }
       } catch (e) {
         console.error('Error loading messages:', e);
         loadErrorCount++;
@@ -454,6 +462,31 @@
             messageTimer = null;
           }
         }
+      }
+    }
+
+    // 按需加载消息的媒体数据
+    async function loadMessageMedia(messageId, mediaType, element) {
+      try {
+        const result = await callApi('messageMedia', { messageId });
+        if (result.code === 0 && result.data) {
+          const media = result.data;
+
+          if (mediaType === 'images' && media.images && media.images.length > 0) {
+            element.innerHTML = '<div style="margin-top:8px;">' +
+              media.images.map(url =>
+                `<img src="${url}" style="max-width:200px;max-height:200px;border-radius:8px;margin-right:4px;margin-bottom:4px;cursor:pointer;" onclick="previewImage('${url}')" />`
+              ).join('') +
+              '</div>';
+          } else if (mediaType === 'video' && media.video) {
+            element.innerHTML = `<div style="margin-top:8px;"><video src="${media.video}" style="max-width:250px;max-height:200px;border-radius:8px;cursor:pointer;" controls onclick="previewVideo('${media.video}')"></video></div>`;
+          }
+        } else {
+          element.innerHTML = '<div style="color:#999;font-size:12px;">媒体加载失败</div>';
+        }
+      } catch (e) {
+        console.error('Error loading media:', e);
+        element.innerHTML = '<div style="color:#999;font-size:12px;">媒体加载失败</div>';
       }
     }
 
