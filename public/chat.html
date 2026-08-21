@@ -176,25 +176,37 @@
     async function loadFriends() {
       try {
         console.log('Loading friends for user:', userInfo.userId);
+        console.log('Calling friends API...');
         const result = await callApi('friends', { userId: userInfo.userId });
         console.log('Friends API result:', result);
+
+        if (!result || result.code !== 0) {
+          console.error('Friends API error:', result);
+          showToast('加载好友失败');
+          return;
+        }
+
         const friends = result.data || [];
         console.log('Friends count:', friends.length);
 
         // 获取每个好友的未读消息数
         let unreadByFriend = {};
         try {
+          console.log('Loading unread counts...');
           const unreadResult = await callApi('unreadCountByFriend', { userId: userInfo.userId });
           unreadByFriend = unreadResult.data || {};
+          console.log('Unread counts loaded:', unreadByFriend);
         } catch (e) {
           console.error('Error loading unread counts:', e);
         }
 
         if (friends.length === 0) {
+          console.log('No friends found');
           document.getElementById('friendsList').innerHTML = '<div class="empty-state"><div class="icon">👥</div><div>还没有好友<br><small>投放漂流瓶时可以结交好友</small></div></div>';
           return;
         }
 
+        console.log('Rendering friends list...');
         const friendsHtml = friends.map(f => {
           const unreadCount = unreadByFriend[f.friendId] || 0;
           const unreadBadge = unreadCount > 0
@@ -215,8 +227,12 @@
         console.log('Friends HTML length:', friendsHtml.length);
         document.getElementById('friendsList').innerHTML = friendsHtml;
 
+        console.log('Attaching click handlers to', document.querySelectorAll('.friend-item').length, 'friend items');
         document.querySelectorAll('.friend-item').forEach(el => {
-          el.onclick = () => openChat(el.dataset.friendId, el.dataset.friendName);
+          el.onclick = () => {
+            console.log('Friend clicked:', el.dataset.friendId, el.dataset.friendName);
+            openChat(el.dataset.friendId, el.dataset.friendName);
+          };
         });
         console.log('Friends loaded successfully');
       } catch (e) {
