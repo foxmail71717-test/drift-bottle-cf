@@ -675,6 +675,7 @@ async function handleGetMessages(env, { userId, friendId, limit = 50 }) {
         createTime: msg.createTime,
         fromNickname: nickname,
         isMine: msg.fromUserId === userId,
+        isBottleContent: msg.isBottleContent || false,
         // 标记是否有媒体文件，但不包含实际数据
         hasImages: msg.images && msg.images.length > 0,
         hasVideo: !!msg.video
