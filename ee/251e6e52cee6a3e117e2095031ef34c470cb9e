@@ -1,0 +1,20 @@
+public/js/pages/throw.js
+  s_47e6bf0a10299f::t_a6755dafb8c9ea 76-81
+  s_47e6bf0a10299f::t_1ecb6374989a73 95-103
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.40-trip",
+  "base_commit_sha": "ee251e6e52cee6a3e117e2095031ef34c470cb9e",
+  "prompts": {},
+  "sessions": {
+    "s_47e6bf0a10299f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "32c52b76-faa2-4741-b9c2-ebac312a0a2f",
+        "model": "qwen3.7-plus"
+      },
+      "human_author": "Tingting Dou （窦庭庭） <doutt@trip.com>"
+    }
+  }
+}
