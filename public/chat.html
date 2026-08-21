@@ -350,6 +350,7 @@
 
     // 打开聊天
     async function openChat(friendId, friendName) {
+      console.log('=== openChat START ===');
       console.log('openChat called with friendId:', friendId, 'friendName:', friendName);
       currentFriend = { id: friendId, name: friendName };
       document.getElementById('chatFriendName').textContent = friendName;
@@ -357,12 +358,19 @@
       document.getElementById('chatWindow').classList.add('active');
 
       // 标记为已读
+      console.log('Calling markRead...');
       await callApi('markRead', { userId: userInfo.userId, friendId });
+      console.log('markRead completed');
 
       loadErrorCount = 0; // 重置错误计数
+      console.log('Calling loadMessages for the first time...');
       await loadMessages();
+      console.log('First loadMessages completed');
+
       // 定时刷新消息（改为10秒，减少请求频率）
+      console.log('Setting up polling interval');
       messageTimer = setInterval(loadMessages, 10000);
+      console.log('=== openChat END ===');
     }
 
     // 关闭聊天
