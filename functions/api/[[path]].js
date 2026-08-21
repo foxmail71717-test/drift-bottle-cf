@@ -632,42 +632,58 @@ async function handleSendMessage(env, { fromUserId, toUserId, content }) {
   }
 }
 
-// 获取聊天记录
-async function handleGetMessages(env, { userId, friendId }) {
-  const messages = await getData(env, 'messages') || {};
+// 获取聊天记录（分页加载）
+async function handleGetMessages(env, { userId, friendId, limit = 50 }) {
+  try {
+    const messages = await getData(env, 'messages') || {};
 
-  // 检查请求者是否是管理员
-  const emailUsers = await getData(env, 'emailUsers') || {};
-  const users = await getData(env, 'users') || {};
-  const requester = Object.values(emailUsers).find(u => u.userId === userId) || Object.values(users).find(u => u.userId === userId);
-  const isAdminRequester = requester && (
-    (requester.email && (env.ADMIN_IDS || '').split(',').filter(id => id).includes(requester.email)) ||
-    requester.role === 'admin'
-  );
-
-  const chatKey = [userId, friendId].sort().join('_');
-  const chatMessages = messages[chatKey] || [];
-
-  const result = chatMessages.map(msg => {
-    const sender = Object.values(emailUsers).find(u => u.userId === msg.fromUserId) || Object.values(users).find(u => u.userId === msg.fromUserId);
-    const isSenderAdmin = sender && (
-      (sender.email && (env.ADMIN_IDS || '').split(',').filter(id => id).includes(sender.email)) ||
-      sender.role === 'admin'
+    // 检查请求者是否是管理员
+    const emailUsers = await getData(env, 'emailUsers') || {};
+    const users = await getData(env, 'users') || {};
+    const requester = Object.values(emailUsers).find(u => u.userId === userId) || Object.values(users).find(u => u.userId === userId);
+    const isAdminRequester = requester && (
+      (requester.email && (env.ADMIN_IDS || '').split(',').filter(id => id).includes(requester.email)) ||
+      requester.role === 'admin'
     );
 
-    let nickname = sender?.nickName || sender?.nickname || '未知用户';
-    if (isSenderAdmin && !isAdminRequester) {
-      nickname = '匿名用户';
-    }
+    const chatKey = [userId, friendId].sort().join('_');
+    const chatMessages = messages[chatKey] || [];
 
-    return {
-      ...msg,
-      fromNickname: nickname,
-      isMine: msg.fromUserId === userId
-    };
-  });
+    // 只返回最新的limit条消息
+    const recentMessages = chatMessages.slice(-limit);
 
-  return jsonResponse({ code: 0, data: result });
+    const result = recentMessages.map(msg => {
+      // 为了减少数据量，不包含完整的base64数据
+      const sender = Object.values(emailUsers).find(u => u.userId === msg.fromUserId) || Object.values(users).find(u => u.userId === msg.fromUserId);
+      const isSenderAdmin = sender && (
+        (sender.email && (env.ADMIN_IDS || '').split(',').filter(id => id).includes(sender.email)) ||
+        sender.role === 'admin'
+      );
+
+      let nickname = sender?.nickName || sender?.nickname || '未知用户';
+      if (isSenderAdmin && !isAdminRequester) {
+        nickname = '匿名用户';
+      }
+
+      return {
+        id: msg.id,
+        fromUserId: msg.fromUserId,
+        toUserId: msg.toUserId,
+        content: msg.content,
+        createTime: msg.createTime,
+        fromNickname: nickname,
+        isMine: msg.fromUserId === userId,
+        // 标记是否有媒体文件，但不包含实际数据
+        hasImages: msg.images && msg.images.length > 0,
+        hasVideo: !!msg.video
+      };
+    });
+
+    return jsonResponse({ code: 0, data: result });
+  } catch (e) {
+    console.error('handleGetMessages error:', e);
+    return jsonResponse({ code: -1, msg: '获取消息失败: ' + e.message });
+  }
 }
 
 // 调试：查看所有消息存储
