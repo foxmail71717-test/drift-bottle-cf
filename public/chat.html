@@ -331,7 +331,9 @@
         return;
       }
       try {
+        console.log('Loading messages for userId:', userInfo.userId, 'friendId:', currentFriend.id);
         const result = await callApi('messages', { userId: userInfo.userId, friendId: currentFriend.id });
+        console.log('Messages API result:', result);
         let messages = result.data || [];
 
         // 如果当前用户不是管理员，过滤掉自己发送的漂流瓶内容消息
