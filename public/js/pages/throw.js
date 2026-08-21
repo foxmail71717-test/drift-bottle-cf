@@ -73,6 +73,12 @@ Pages.throw = {
     document.getElementById('imageInput').addEventListener('change', async (e) => {
       for (const file of Array.from(e.target.files)) {
         if (this.images.length >= this.maxImages) break;
+        // 检查图片大小（限制5MB）
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxSize) {
+          Utils.showToast(`图片 ${file.name} 不能超过5MB`);
+          continue;
+        }
         this.images.push(await Utils.fileToBase64(file));
       }
       this.renderImageGrid();
@@ -86,7 +92,15 @@ Pages.throw = {
 
     document.getElementById('videoInput').addEventListener('change', async (e) => {
       if (e.target.files[0]) {
-        this.video = await Utils.fileToBase64(e.target.files[0]);
+        const file = e.target.files[0];
+        // 检查视频大小（限制10MB）
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+          Utils.showToast('视频文件不能超过10MB');
+          e.target.value = '';
+          return;
+        }
+        this.video = await Utils.fileToBase64(file);
         this.renderVideoContainer();
       }
       e.target.value = '';
