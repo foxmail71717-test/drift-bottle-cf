@@ -464,26 +464,35 @@
 
     // 按需加载消息的媒体数据
     async function loadMessageMedia(messageId, mediaType, element) {
+      console.log('Loading media for message:', messageId, 'type:', mediaType);
       try {
         const result = await callApi('messageMedia', { messageId });
+        console.log('Media API result:', result);
         if (result.code === 0 && result.data) {
           const media = result.data;
+          console.log('Media data:', { images: media.images?.length, video: !!media.video });
 
           if (mediaType === 'images' && media.images && media.images.length > 0) {
+            console.log('Rendering', media.images.length, 'images');
             element.innerHTML = '<div style="margin-top:8px;">' +
               media.images.map(url =>
                 `<img src="${url}" style="max-width:200px;max-height:200px;border-radius:8px;margin-right:4px;margin-bottom:4px;cursor:pointer;" onclick="previewImage('${url}')" />`
               ).join('') +
               '</div>';
           } else if (mediaType === 'video' && media.video) {
+            console.log('Rendering video');
             element.innerHTML = `<div style="margin-top:8px;"><video src="${media.video}" style="max-width:250px;max-height:200px;border-radius:8px;cursor:pointer;" controls onclick="previewVideo('${media.video}')"></video></div>`;
+          } else {
+            console.log('No media data for type:', mediaType);
+            element.innerHTML = '<div style="color:#999;font-size:12px;">无媒体数据</div>';
           }
         } else {
+          console.error('Media API error:', result);
           element.innerHTML = '<div style="color:#999;font-size:12px;">媒体加载失败</div>';
         }
       } catch (e) {
         console.error('Error loading media:', e);
-        element.innerHTML = '<div style="color:#999;font-size:12px;">媒体加载失败</div>';
+        element.innerHTML = '<div style="color:#999;font-size:12px;">媒体加载失败: ' + e.message + '</div>';
       }
     }
 
