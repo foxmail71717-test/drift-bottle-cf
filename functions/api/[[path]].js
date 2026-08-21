@@ -40,6 +40,8 @@ export async function onRequestPost(context) {
         return handleGetMessages(env, body);
       case 'debugMessages':
         return handleDebugMessages(env, body);
+      case 'migrateMessages':
+        return handleMigrateMessages(env, body);
       case 'userInfo':
         return handleGetUserInfo(env, body, request);
       case 'unreadCount':
@@ -673,6 +675,81 @@ async function handleDebugMessages(env) {
       messageCounts: Object.fromEntries(
         Object.entries(messages).map(([key, msgs]) => [key, msgs.length])
       )
+    }
+  });
+}
+
+// 迁移旧管理员ID的消息到固定管理员ID
+async function handleMigrateMessages(env) {
+  const messages = await getData(env, 'messages') || {};
+  const FIXED_ADMIN_ID = 'admin_fixed_001';
+  let migratedCount = 0;
+
+  // 找出所有使用旧管理员ID的聊天
+  const oldAdminPattern = /^admin_[a-z0-9]+_/;
+  const chatsToMigrate = [];
+
+  for (const chatKey of Object.keys(messages)) {
+    // 检查是否包含旧的管理员ID（不是admin_fixed_001）
+    if (chatKey.includes('admin_') && !chatKey.includes(FIXED_ADMIN_ID)) {
+      // 提取好友ID
+      const parts = chatKey.split('_');
+      let friendId = null;
+
+      // 聊天key格式：admin_xxx_friendId 或 friendId_admin_xxx
+      if (parts[0].startsWith('admin_')) {
+        friendId = parts.slice(2).join('_'); // 好友ID可能包含下划线
+      } else {
+        friendId = parts.slice(0, -2).join('_');
+      }
+
+      if (friendId) {
+        chatsToMigrate.push({
+          oldKey: chatKey,
+          friendId: friendId,
+          messages: messages[chatKey]
+        });
+      }
+    }
+  }
+
+  // 迁移消息
+  for (const chat of chatsToMigrate) {
+    const newKey = [FIXED_ADMIN_ID, chat.friendId].sort().join('_');
+
+    if (!messages[newKey]) {
+      messages[newKey] = [];
+    }
+
+    // 合并消息（避免重复）
+    for (const msg of chat.messages) {
+      const exists = messages[newKey].some(m => m.id === msg.id);
+      if (!exists) {
+        // 更新消息中的用户ID
+        if (msg.fromUserId && msg.fromUserId.startsWith('admin_') && msg.fromUserId !== FIXED_ADMIN_ID) {
+          msg.fromUserId = FIXED_ADMIN_ID;
+        }
+        if (msg.toUserId && msg.toUserId.startsWith('admin_') && msg.toUserId !== FIXED_ADMIN_ID) {
+          msg.toUserId = FIXED_ADMIN_ID;
+        }
+        messages[newKey].push(msg);
+        migratedCount++;
+      }
+    }
+
+    // 删除旧的聊天key
+    delete messages[chat.oldKey];
+  }
+
+  // 保存更新后的消息
+  await setData(env, 'messages', messages);
+
+  return jsonResponse({
+    code: 0,
+    msg: `迁移完成，共迁移 ${migratedCount} 条消息`,
+    data: {
+      migratedChats: chatsToMigrate.length,
+      migratedMessages: migratedCount
     }
   });
 }
