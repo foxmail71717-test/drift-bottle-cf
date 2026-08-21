@@ -1,3 +1,16 @@
+// 处理 OPTIONS 预检请求（CORS）
+export async function onRequestOptions(context) {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, x-user-id',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
+}
+
 // API 入口 - 漂流瓶接口
 export async function onRequestPost(context) {
   const { request, env } = context;
