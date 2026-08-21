@@ -38,6 +38,8 @@ export async function onRequestPost(context) {
         return handleSendMessage(env, body);
       case 'messages':
         return handleGetMessages(env, body);
+      case 'debugMessages':
+        return handleDebugMessages(env, body);
       case 'userInfo':
         return handleGetUserInfo(env, body, request);
       case 'unreadCount':
@@ -584,25 +586,35 @@ async function handleSendMessage(env, { fromUserId, toUserId, content }) {
     return jsonResponse({ code: -1, msg: '还不是好友' });
   }
 
-  const messages = await getData(env, 'messages') || {};
-  const msgId = 'msg_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+  try {
+    const messages = await getData(env, 'messages') || {};
+    const msgId = 'msg_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
 
-  // 用排序键存储，方便按时间查询
-  const chatKey = [fromUserId, toUserId].sort().join('_');
-  if (!messages[chatKey]) {
-    messages[chatKey] = [];
+    // 用排序键存储，方便按时间查询
+    const chatKey = [fromUserId, toUserId].sort().join('_');
+    console.log('Sending message - chatKey:', chatKey, 'from:', fromUserId, 'to:', toUserId);
+
+    if (!messages[chatKey]) {
+      messages[chatKey] = [];
+    }
+
+    messages[chatKey].push({
+      id: msgId,
+      fromUserId,
+      toUserId,
+      content: content.trim(),
+      createTime: new Date().toISOString()
+    });
+
+    console.log('Total messages in chat:', messages[chatKey].length);
+    await setData(env, 'messages', messages);
+    console.log('Message saved successfully');
+
+    return jsonResponse({ code: 0, data: { id: msgId } });
+  } catch (e) {
+    console.error('Error saving message:', e);
+    return jsonResponse({ code: -1, msg: '消息保存失败: ' + e.message });
   }
-
-  messages[chatKey].push({
-    id: msgId,
-    fromUserId,
-    toUserId,
-    content: content.trim(),
-    createTime: new Date().toISOString()
-  });
-
-  await setData(env, 'messages', messages);
-  return jsonResponse({ code: 0, data: { id: msgId } });
 }
 
 // 获取聊天记录
@@ -647,6 +659,22 @@ async function handleGetMessages(env, { userId, friendId }) {
   });
 
   return jsonResponse({ code: 0, data: result });
+}
+
+// 调试：查看所有消息存储
+async function handleDebugMessages(env) {
+  const messages = await getData(env, 'messages') || {};
+
+  return jsonResponse({
+    code: 0,
+    data: {
+      totalChats: Object.keys(messages).length,
+      chatKeys: Object.keys(messages),
+      messageCounts: Object.fromEntries(
+        Object.entries(messages).map(([key, msgs]) => [key, msgs.length])
+      )
+    }
+  });
 }
 
 // 获取用户信息
