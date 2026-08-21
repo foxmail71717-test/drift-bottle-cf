@@ -635,14 +635,10 @@ async function handleSendMessage(env, { fromUserId, toUserId, content }) {
 // 获取聊天记录
 async function handleGetMessages(env, { userId, friendId }) {
   const messages = await getData(env, 'messages') || {};
-  const emailUsers = await getData(env, 'emailUsers') || {};
-  const users = await getData(env, 'users') || {};
-
-  // 调试日志
-  console.log('Get messages - userId:', userId, 'friendId:', friendId);
-  console.log('All chat keys:', Object.keys(messages));
 
   // 检查请求者是否是管理员
+  const emailUsers = await getData(env, 'emailUsers') || {};
+  const users = await getData(env, 'users') || {};
   const requester = Object.values(emailUsers).find(u => u.userId === userId) || Object.values(users).find(u => u.userId === userId);
   const isAdminRequester = requester && (
     (requester.email && (env.ADMIN_IDS || '').split(',').filter(id => id).includes(requester.email)) ||
@@ -650,9 +646,7 @@ async function handleGetMessages(env, { userId, friendId }) {
   );
 
   const chatKey = [userId, friendId].sort().join('_');
-  console.log('Looking for chatKey:', chatKey);
   const chatMessages = messages[chatKey] || [];
-  console.log('Found messages:', chatMessages.length);
 
   const result = chatMessages.map(msg => {
     const sender = Object.values(emailUsers).find(u => u.userId === msg.fromUserId) || Object.values(users).find(u => u.userId === msg.fromUserId);
