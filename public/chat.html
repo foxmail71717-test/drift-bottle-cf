@@ -155,19 +155,16 @@
 
     // 初始化
     async function init() {
-      alert('Init function called');
       console.log('Chat page init started');
       console.log('localStorage userInfo:', localStorage.getItem('userInfo'));
 
       const saved = localStorage.getItem('userInfo');
       if (!saved) {
-        alert('No userInfo, redirecting to login');
         console.log('No userInfo found, redirecting to login');
         location.href = '/login.html';
         return;
       }
       userInfo = JSON.parse(saved);
-      alert('User info loaded: ' + userInfo.userId);
       console.log('User info loaded:', userInfo);
 
       // Tab切换
